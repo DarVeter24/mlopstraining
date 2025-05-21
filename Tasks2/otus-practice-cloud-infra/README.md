@@ -110,8 +110,3 @@ MIT
 ## Автор
 
 - [Nick Osipov](https://t.me/NickOsipov)
-
-
-s3cmd ls s3://otus-mlops-source-data/
-s3cmd ls s3://otus-bucket-b1g51smi0tng33t5hkg9
-hdfs dfs -ls /user/ubuntu/data
