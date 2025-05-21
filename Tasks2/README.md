@@ -33,7 +33,8 @@ https://github.com/DarVeter24/mlopstraining/blob/main/Tasks2/otus-practice-cloud
 удаления кластера.
 
 
-![](Tasks2/images/bucket.png)
+![](images/bucket.png)
+
 
 
 
