@@ -186,3 +186,13 @@ Yandex Data Proc - Intel Ice Lake. RAM
 7. В соответствии с достигнутыми результатами, изменить статус ранее созданных
 задач на Kanban-доске в GitHub Projects. Возможно, некоторые задачи нужно будет
 скорректировать, разделить на подзадачи или объединить друг с другом.
+
+https://github.com/users/DarVeter24/projects/2
+
+Распределил подзадачи в основные групп
+
+Безопасное хранение данных
+https://github.com/DarVeter24/mlopstraining/issues/3
+
+Создание инфраструктуры
+https://github.com/DarVeter24/mlopstraining/issues/8
