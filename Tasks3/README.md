@@ -52,10 +52,10 @@ PythonOperator, BashOperator или SparkSubmitOperator для Apache Airflow и
 root
  |-- # tranaction_id | tx_datetime | customer_id | terminal_id | tx_amount | tx_time_seconds | tx_time_days | tx_fraud | tx_fraud_scenario: integer (nullable = true)
 
-Строк до очистки : 1879794138
-Строк после dropna: 1879794138
-Строк после фильтра выбросов: 1879794138
-Строк после логических фильтров: 1879794138 → 1879794138
+- Строк до очистки : 1879794138
+- Строк после dropna: 1879794138
+- Строк после фильтра выбросов: 1879794138
+- Строк после логических фильтров: 1879794138
 
 Посмотреть можно в папке clean
 
