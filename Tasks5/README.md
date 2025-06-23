@@ -22,7 +22,6 @@ spark-submit.
 pyspark_script.py подменил своим файлом, датасет состоит из парочки файлов txt, чтобы не ждать выполения обработки всего датасета.
 
 - [Spark pyspark_script.py](./my-practice-airflow-yandex-cloud/src/pyspark_script.py)
-- [Src папка](./my-practice-airflow-yandex-cloud/data)
 
 3. Убедиться, что граф загрузился в систему и отображается в графическом
 интерфейсе. Файл(-ы) с DAG необходимо разместить в Вашем GitHub- репозитории и
