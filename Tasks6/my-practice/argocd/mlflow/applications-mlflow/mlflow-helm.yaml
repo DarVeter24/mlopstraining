@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mlflow
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: mlflow
+    repoURL: https://community-charts.github.io/helm-charts
+    targetRevision: 1.2.0
+    helm:
+      values: |
+        ingress:
+          enabled: true
+          className: "system-ingress"
+          hosts:
+            - host: mlflow.darveter.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+        auth:
+          enabled: true
+          adminUsername: "admin"
+          adminPassword: "password1312"
+
+        extraEnvVars:
+          MLFLOW_S3_ENDPOINT_URL: http://192.168.31.201:9000
+
+        artifactRoot:
+          s3:
+            enabled: true
+            bucket: mlflow-artifacts
+            path: ""
+            awsAccessKeyId: "admin"
+            awsSecretAccessKey: "password"
+
+        # postgresql:
+        #   enabled: true
+        #   auth:
+        #     username: "mlflow"
+        #     password: "mlflow-password"
+        #     database: "mlflow"
+        #   primary:
+        #     persistence:
+        #       enabled: false
+
+        backendStore:
+          postgres:
+            enabled: true
+            host: "192.168.31.201"
+            port: 5430
+            database: "postgres_db"
+            user: "postgres_user"
+            password: "postgres_password"
+
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mlflow
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

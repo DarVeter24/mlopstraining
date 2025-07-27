@@ -1,0 +1,102 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: airflow
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: airflow
+    repoURL: https://airflow.apache.org
+    targetRevision: 1.17.0
+    helm:
+      values: |
+        ingress:
+          enabled: ~
+          apiServer:
+            enabled: true
+            ingressClassName: "system-ingress"
+            host: "airflow.darveter.com"
+
+        # Обязательные параметры для Argo CD согласно официальной документации
+        createUserJob:
+          useHelmHooks: false
+          applyCustomEnv: false
+
+        migrateDatabaseJob:
+          useHelmHooks: false
+          applyCustomEnv: false
+          # Аннотация для автоматического запуска миграций БД при синхронизации
+          jobAnnotations:
+            "argocd.argoproj.io/hook": Sync
+
+        # Настройки пользователя по умолчанию (администратора)
+        webserver:
+          defaultUser:
+            enabled: true
+            role: Admin
+            username: admin
+            email: admin@example.com
+            firstName: admin
+            lastName: user
+            password: password
+
+        # Настройки PostgreSQL с указанием storageClass
+        postgresql:
+          enabled: true
+          auth:
+            postgresPassword: postgres
+          primary:
+            persistence:
+              enabled: true
+              storageClass: local-path
+              accessModes:
+                - ReadWriteOnce
+              size: 8Gi
+
+        # Настройки Redis (базовая конфигурация без persistence)
+        redis:
+          enabled: true
+
+        # Настройки логов - отключены для совместимости с local-path
+        logs:
+          persistence:
+            enabled: true
+            size: 1Gi
+            storageClassName: nfs-csi
+
+        # Использование KubernetesExecutor для избежания проблем с shared storage
+        executor: KubernetesExecutor
+
+        # Использование кастомного образа
+        images:
+          airflow:
+            repository: mrhagal/my-airflow-mlops
+            tag: v2
+            pullPolicy: Always
+
+        # Отключение persistence для компонентов
+        workers:
+          persistence:
+            enabled: false
+
+        triggerer:
+          persistence:
+            enabled: false
+
+        dags:
+          persistence:
+            enabled: true               # включаем хранение DAG-ов на PVC
+            size: 1Gi                   # нужный размер
+            storageClassName: nfs-csi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: airflow
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

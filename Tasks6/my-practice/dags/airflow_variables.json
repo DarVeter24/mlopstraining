@@ -1,0 +1,11 @@
+{
+  "S3_ENDPOINT_URL": "http://192.168.31.201:9000",
+  "S3_ACCESS_KEY": "admin",
+  "S3_SECRET_KEY": "password",
+  "S3_BUCKET_NAME": "mlflow-artifacts",
+  "CLEAN_DATA_PATH": "s3a://otus/clean/fraud_transactions_fixed_new.parquet",
+  "MLFLOW_TRACKING_URI": "http://mlflow.mlflow.svc.cluster.local:5000",
+  "MLFLOW_EXPERIMENT_NAME": "fraud_detection",
+  "MLFLOW_TRACKING_USERNAME": "admin",
+  "MLFLOW_TRACKING_PASSWORD": "password1312"
+}

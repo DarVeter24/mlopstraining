@@ -1,0 +1,20 @@
+# MLOps зависимости
+mlflow==2.15.1
+pyspark==3.5.5
+
+# Работа с данными
+pandas
+numpy
+scikit-learn
+pyarrow
+
+# S3/MinIO
+boto3
+s3fs
+
+# Kubernetes
+apache-airflow-providers-cncf-kubernetes
+
+# Утилиты
+requests
+python-dotenv
