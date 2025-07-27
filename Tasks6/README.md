@@ -165,7 +165,7 @@ Tasks6/
 |-----------|---------------------------|---------------------------------------|
 | **Airflow** | Managed Service for Apache Airflow | Самостоятельное развертывание в K8s кластере |
 | **MLflow** | Отдельная виртуальная машина | Pod в Kubernetes кластере |
-| **База данных** | Managed Service for PostgreSQL/MySQL | PostgreSQL в контейнере |
+| **База данных** | Managed Service for PostgreSQL/MySQL | PostgreSQL в контейнере на отдельной vm в не кластера k8s |
 | **Object Storage** | Yandex Object Storage | MinIO в K8s кластере |
 | **Spark кластер** | Облачный Spark-кластер | PySpark в Airflow задачах |
 | **Инфраструктура** | Облачные ресурсы | ВМ на Proxmox VE (физические серверы) |
