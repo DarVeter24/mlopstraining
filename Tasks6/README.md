@@ -24,36 +24,36 @@
 **🔧 Bare Metal Implementation:** Система Apache Airflow развернута в Kubernetes кластере на виртуальных машинах Proxmox VE с использованием ArgoCD и Helm чарта (вместо Yandex Cloud Managed Service for Apache Airflow).
 
 **Конфигурационные файлы:**
-- [ArgoCD манифест для Airflow](./argocd/airflow/airflow-helm.yaml)
-- [Dockerfile для кастомного образа Airflow](./argocd/airflow/Dockerfile)
-- [Requirements.txt с зависимостями](./argocd/airflow/requirements.txt)
+- [ArgoCD манифест для Airflow](./my-practice/argocd/airflow/airflow-helm.yaml)
+- [Dockerfile для кастомного образа Airflow](./my-practice/argocd/airflow/Dockerfile)
+- [Requirements.txt с зависимостями](./my-practice/argocd/airflow/requirements.txt)
 
 **Результат развертывания:**
 
-![Airflow в ArgoCD](images/argocd-airflow.png)
+![Airflow в ArgoCD](./my-practice/images/argocd-airflow.png)
 
 **Web-интерфейс Airflow:**
 
-![Airflow UI](images/airflow-ui.png)
+![Airflow UI](./my-practice/images/airflow-ui.png)
 
 ### 2. Запуск системы MLflow
 
 **🔧 Bare Metal Implementation:** Система MLflow развернута в Kubernetes кластере на виртуальных машинах Proxmox VE с использованием PostgreSQL в качестве базы данных метаданных и MinIO в качестве S3-совместимого хранилища артефактов (вместо отдельной ВМ в Yandex Cloud и Managed Service for PostgreSQL).
 
 **Конфигурационные файлы:**
-- [ArgoCD манифесты для MLflow](./argocd/mlflow/)
+- [ArgoCD манифесты для MLflow](./my-practice/argocd/mlflow/)
 
 **Web-интерфейс MLflow:**
 
-![MLflow UI](images/mkflow-ui.png)
+![MLflow UI](./my-practice/images/mkflow-ui.png)
 
 ### 3. Создание Python скрипта с PySpark
 
 Разработан DAG для Apache Airflow, включающий обучение модели с использованием PySpark на данных о мошеннических транзакциях.
 
 **Основные файлы:**
-- [DAG файл simple_training_pipeline.py](./dags/simple_training_pipeline.py) - основной пайплайн обучения модели
-- [Файл переменных Airflow](./dags/airflow_variables.json) - конфигурация подключений и параметров
+- [DAG файл simple_training_pipeline.py](./my-practice/dags/simple_training_pipeline.py) - основной пайплайн обучения модели
+- [Файл переменных Airflow](./my-practice/dags/airflow_variables.json) - конфигурация подключений и параметров
 
 **Ключевые особенности реализации:**
 - Использование PySpark для обработки больших данных
@@ -93,7 +93,7 @@ mlflow.log_metric("auc", auc)
 
 **Результаты сохранения в MinIO:**
 
-![MinIO Buckets](images/minio-buckets.png)
+![MinIO Buckets](./my-practice/images/minio-buckets.png)
 
 ### 5. Периодическое выполнение DAG и тестирование
 
@@ -113,7 +113,7 @@ dag = DAG(
 
 **Результаты успешного выполнения:**
 
-![MLflow Training Results](images/mlflow-training_20250727_1113.png)
+![MLflow Training Results](./my-practice/images/mlflow-training_20250727_1113.png)
 
 Как видно на скриншоте, модель успешно обучена и зарегистрирована в MLflow с следующими метриками:
 - **Accuracy**: 0.928 (92.8%)
@@ -124,26 +124,27 @@ dag = DAG(
 ## Структура проекта
 
 ```
-my-practice/
-├── argocd/                           # ArgoCD манифесты
-│   ├── airflow/                      # Конфигурация Airflow
-│   │   ├── airflow-helm.yaml         # Helm чарт для Airflow
-│   │   ├── Dockerfile                # Кастомный образ с зависимостями
-│   │   ├── requirements.txt          # Python зависимости
-│   │   └── README.md                 # Описание компонента
-│   └── mlflow/                       # Конфигурация MLflow
-│       └── applications-mlflow/      # ArgoCD приложения
-├── dags/                             # Airflow DAG файлы
-│   ├── simple_training_pipeline.py   # Основной пайплайн обучения
-│   ├── airflow_variables.json        # Переменные конфигурации
-│   └── README.md                     # Описание DAG
-├── images/                           # Скриншоты результатов
-│   ├── airflow-ui.png               # Web-интерфейс Airflow
-│   ├── argocd-airflow.png           # Airflow в ArgoCD
-│   ├── mkflow-ui.png                # Web-интерфейс MLflow
-│   ├── minio-buckets.png            # Хранилище MinIO
-│   └── mlflow-training_20250727_1113.png # Результаты обучения
-└── README.md                         # Данный файл
+Tasks6/
+├── my-practice/                      # Основная папка проекта
+│   ├── argocd/                       # ArgoCD манифесты
+│   │   ├── airflow/                  # Конфигурация Airflow
+│   │   │   ├── airflow-helm.yaml     # Helm чарт для Airflow
+│   │   │   ├── Dockerfile            # Кастомный образ с зависимостями
+│   │   │   ├── requirements.txt      # Python зависимости
+│   │   │   └── README.md             # Описание компонента
+│   │   └── mlflow/                   # Конфигурация MLflow
+│   │       └── applications-mlflow/  # ArgoCD приложения
+│   ├── dags/                         # Airflow DAG файлы
+│   │   ├── simple_training_pipeline.py # Основной пайплайн обучения
+│   │   ├── airflow_variables.json    # Переменные конфигурации
+│   │   └── README.md                 # Описание DAG
+│   └── images/                       # Скриншоты результатов
+│       ├── airflow-ui.png           # Web-интерфейс Airflow
+│       ├── argocd-airflow.png       # Airflow в ArgoCD
+│       ├── mkflow-ui.png            # Web-интерфейс MLflow
+│       ├── minio-buckets.png        # Хранилище MinIO
+│       └── mlflow-training_20250727_1113.png # Результаты обучения
+└── README.md                         # Данный файл (отчет по ДЗ №6)
 ```
 
 ## Использованные технологии
