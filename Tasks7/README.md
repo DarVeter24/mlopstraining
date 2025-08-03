@@ -54,8 +54,6 @@ should_deploy = f1_significant and f1_improvement        # ОБА критери
 
 ### 4. Результаты A/B тестирования
 
-## ⚡ Особенность реализации
-
 **Airflow DAG с A/B тестированием:**
 
 ![Airflow A/B Test DAG](./images/airflow-ab-test.png)
