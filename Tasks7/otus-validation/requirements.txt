@@ -1,0 +1,12 @@
+ipykernel
+mlflow
+scikit-learn
+scipy
+matplotlib
+seaborn
+pandas
+numpy
+requests
+python-dotenv
+boto3
+cryptography
