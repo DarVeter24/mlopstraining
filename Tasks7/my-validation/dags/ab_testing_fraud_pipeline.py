@@ -1,7 +1,7 @@
 """
 dag: ab_testing_fraud_detection
 description: a/b тестирование модели мошенничества с валидацией стратегий
-версия: 1.0 (адаптировано из simple_training_pipeline.py + ab_test.py)
+версия: 1.0 (адаптировано из simple_training_pipeline.py)
 """
 
 import os
