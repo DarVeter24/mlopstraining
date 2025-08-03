@@ -19,25 +19,25 @@
 
 **Airflow DAG с A/B тестированием:**
 
-![Airflow A/B Test DAG](../images/airflow-ab-test.png)
+![Airflow A/B Test DAG](./images/airflow-ab-test.png)
 
 *Успешное выполнение DAG с параллельным обучением двух моделей и последующим A/B тестированием*
 
 **Список экспериментов в MLflow:**
 
-![MLflow Experiments List](../images/mlflow-ab-list.png)
+![MLflow Experiments List](./images/mlflow-ab-list.png)
 
 *MLflow интерфейс показывает все прогоны: базовые модели, модели-кандидаты и результаты A/B тестов*
 
 **Детальные метрики A/B теста:**
 
-![A/B Test Metrics](../images/ab-test-metrics.png)
+![A/B Test Metrics](./images/ab-test-metrics.png)
 
 *Подробные статистические метрики A/B теста: p-values, effect size, улучшения по каждой метрике*
 
 **Артефакты production модели:**
 
-![Production Model Artifacts](../images/production_model-artifacts.png)
+![Production Model Artifacts](./images/production_model-artifacts.png)
 
 *Сохраненные артефакты базовой модели в MLflow: Spark pipeline, параметры, метрики*
 
@@ -59,7 +59,9 @@
 ### 2. Создание A/B тестирования модели
 
 **Основные файлы:**
-- [ab_testing_fraud_pipeline.py](./dags/ab_testing_fraud_pipeline.py) - DAG с A/B тестированием
+- [ab_testing_fraud_pipeline.py](./my-validation/dags/ab_testing_fraud_pipeline.py) - DAG с A/B тестированием
+- [simple_training_pipeline.py](./my-validation/dags/simple_training_pipeline.py) - базовый пайплайн (источник)
+- [ab_test.py](./my-validation/src/ab_test.py) - логика статистического сравнения
 
 **Ключевые функции:**
 - `bootstrap_metrics_spark()` - bootstrap анализ метрик (100 итераций)
