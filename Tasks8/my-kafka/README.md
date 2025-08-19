@@ -8,7 +8,7 @@
 ---
 
 ### **ШАГ 1: Подготовка модели (✅ Готово)**
-**Файл:** `dag/simple_training_pipeline.py`
+**Файл:** [`dag/simple_training_pipeline.py`](dag/simple_training_pipeline.py)
 
 **Функциональность:**
 - Обучение RandomForest модели на данных fraud_transactions_fixed_new.parquet
@@ -43,7 +43,7 @@
 ![Kafka Topics](images/kafka-topics.png)
 
 ### **ШАГ 3: Producer DAG (✅ Готов)**
-**Файл:** `dag/producer_replay_transactions.py`
+**Файл:** [`dag/producer_replay_transactions.py`](dag/producer_replay_transactions.py)
 
 **Функциональность:**
 - Генерация исторических транзакций из S3/MinIO хранилища
@@ -69,7 +69,7 @@
 ![Producer Test](images/tasks8_etap1_producer_test_v4.png)
 
 ### **ШАГ 4: Мониторинг Consumer Lag (✅ Готов)**
-**Файл:** `dag/kafka_lag_monitor.py`
+**Файл:** [`dag/kafka_lag_monitor.py`](dag/kafka_lag_monitor.py)
 
 **Функциональность:**
 - Подключение к Kafka Admin API
@@ -90,13 +90,12 @@
 ![Kafka Lag Monitor](images/tasks8_etap3_kafka_lag_monitor_v8_1.png)
 
 ### **ШАГ 5: Spark Streaming Job для инференса (✅ Готов)**
-**Файл:** `dag/spark_stream_inference_local.py`
+**Файл:** [`dag/spark_stream_inference_local.py`](dag/spark_stream_inference_local.py)
 
-**Упрощение** `dag/spark_stream_inference.py` на `dag/
-spark_stream_inference_local.py`
+**Упрощение:** [`dag/spark_stream_inference.py`](dag/spark_stream_inference.py) → [`dag/spark_stream_inference_local.py`](dag/spark_stream_inference_local.py)
 
 **🚨 Проблема и решение:**
-Первоначальная реализация `spark_stream_inference.py` для Kubernetes Spark кластера столкнулась с критическими проблемами: executors падали с ошибкой "Command exited with code 1", Spark не мог выделить ресурсы для MLflow модели ("Initial job has not accepted any resources"), и возникали конфликты сериализации при использовании broadcast variables. После множественных попыток оптимизации ресурсов и исправления ошибок было принято решение перейти на Local Mode с упрощенной архитектурой. Решение `spark_stream_inference_local.py` использует локальный Spark (`local[2]`), простые UDF без broadcast variables, локальные checkpoints вместо S3, и timeout-защиту для стабильной работы.
+Первоначальная реализация [`spark_stream_inference.py`](dag/spark_stream_inference.py) для Kubernetes Spark кластера столкнулась с критическими проблемами: executors падали с ошибкой "Command exited with code 1", Spark не мог выделить ресурсы для MLflow модели ("Initial job has not accepted any resources"), и возникали конфликты сериализации при использовании broadcast variables. После множественных попыток оптимизации ресурсов и исправления ошибок было принято решение перейти на Local Mode с упрощенной архитектурой. Решение [`spark_stream_inference_local.py`](dag/spark_stream_inference_local.py) использует локальный Spark (`local[2]`), простые UDF без broadcast variables, локальные checkpoints вместо S3, и timeout-защиту для стабильной работы.
 
 **Функциональность:**
 - Подключение к Kafka как Structured Streaming consumer
