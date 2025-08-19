@@ -1,0 +1,16 @@
+version: '3'
+services:
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - 29093:9093
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      CLUSTER_ID: "c1f7b1e3-d5a3-4f79-a01f-5a9ed51b2a5f"
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9094"
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: "localhost:9094"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
