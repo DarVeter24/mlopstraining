@@ -125,6 +125,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: ./Tasks9  # Контекст сборки в Tasks9/
+        load: true  # Загружаем образ в локальный Docker daemon
         push: false
         tags: tasks9-fraud-detection-api:test
         cache-from: type=gha
@@ -132,6 +133,9 @@ jobs:
         
     - name: Test Docker image
       run: |
+        # Проверяем что образ создался
+        docker images | grep tasks9-fraud-detection-api
+        
         # Запускаем контейнер в тестовом режиме
         docker run -d -p 8000:8000 --name tasks9-test-container \
           -e ENVIRONMENT=test \
