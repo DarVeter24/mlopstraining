@@ -1,0 +1,43 @@
+# FastAPI и веб-сервер
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+
+# MLflow и ML зависимости
+mlflow==3.3.1
+pandas==2.3.2
+numpy==2.3.2
+scikit-learn==1.7.1
+joblib==1.5.1
+
+# PySpark для работы с моделью
+pyspark==3.5.5
+py4j==0.10.9.7
+
+# AWS/S3 для MLflow артефактов
+boto3==1.40.16
+botocore==1.40.16
+
+# Конфигурация и утилиты
+python-dotenv==1.1.1
+requests==2.32.5
+setuptools==80.9.0
+
+# Дополнительные зависимости для стабильной работы
+typing-extensions==4.15.0
+packaging==25.0
+protobuf==6.32.0
+sqlalchemy==2.0.43
+cryptography==45.0.6
+pyarrow==21.0.0
+scipy==1.16.1
+
+# Для тестирования (опционально)
+pytest==8.3.4
+pytest-asyncio==0.25.0
+httpx==0.28.1
+
+# Для форматирования кода (опционально)
+black==24.10.0
+isort==5.13.2
+flake8==7.1.1

@@ -1,0 +1,213 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать вручную
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/fraud-detection-api
+
+jobs:
+  # Этап 1: Тестирование кода
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-asyncio httpx
+        
+    - name: Create test environment file
+      run: |
+        cp env-example .env
+        # Настройка тестовых переменных
+        echo "ENVIRONMENT=test" >> .env
+        echo "DEBUG=true" >> .env
+        echo "LOG_LEVEL=DEBUG" >> .env
+        
+    - name: Run unit tests
+      run: |
+        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        
+    - name: Test API endpoints (simple mode)
+      run: |
+        python test_simple_api.py
+        
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.12'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Этап 2: Линтинг и проверка качества кода
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+        
+    - name: Run Black (code formatter)
+      run: black --check --diff src/ tests/
+      
+    - name: Run isort (import sorter)
+      run: isort --check-only --diff src/ tests/
+      
+    - name: Run flake8 (linter)
+      run: flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+      
+    - name: Run mypy (type checker)
+      run: mypy src/ --ignore-missing-imports --no-strict-optional
+
+  # Этап 3: Сборка и тестирование Docker образа
+  docker-test:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image for testing
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: fraud-detection-api:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Test Docker image
+      run: |
+        # Запускаем контейнер в тестовом режиме
+        docker run -d -p 8000:8000 --name test-container \
+          -e ENVIRONMENT=test \
+          -e DEBUG=true \
+          -e LOG_LEVEL=INFO \
+          fraud-detection-api:test python -m src.api_simple
+          
+        # Ждем запуска
+        sleep 10
+        
+        # Тестируем health endpoint
+        curl -f http://localhost:8000/health || exit 1
+        
+        # Тестируем predict endpoint
+        curl -f -X POST http://localhost:8000/predict \
+          -H "Content-Type: application/json" \
+          -d '{"transaction_id":"ci_test","customer_id":1,"terminal_id":1,"tx_amount":100,"tx_time_seconds":1705312200,"tx_time_days":19723,"tx_fraud_scenario":0}' || exit 1
+          
+        # Останавливаем контейнер
+        docker stop test-container
+
+  # Этап 4: Сборка и публикация образа (только для main ветки)
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [test, lint, docker-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Generate deployment artifact
+      run: |
+        # Создаем файл с информацией о деплое
+        mkdir -p deployment
+        echo "IMAGE_TAG=${{ steps.meta.outputs.tags }}" > deployment/image-info.env
+        echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> deployment/image-info.env
+        echo "GIT_SHA=${{ github.sha }}" >> deployment/image-info.env
+        
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-info
+        path: deployment/
+
+  # Этап 5: Уведомление об успешном деплое
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: always() && github.ref == 'refs/heads/main'
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [ "${{ needs.build-and-push.result }}" == "success" ]; then
+          echo "✅ Deployment successful! Image pushed to registry."
+          echo "🚀 Ready for ArgoCD sync"
+        else
+          echo "❌ Deployment failed!"
+          exit 1
+        fi

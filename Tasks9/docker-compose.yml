@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  fraud-detection-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraud-detection-api
+    ports:
+      - "8000:8000"
+    environment:
+      # MLflow Configuration
+      - MLFLOW_TRACKING_URI=http://mlflow.darveter.com
+      - MLFLOW_MODEL_RUN_ID=eb1baf3686bd452981925a0fa4725ab8
+      - MLFLOW_MODEL_ARTIFACT=fraud_model_production
+      - MLFLOW_USERNAME=admin
+      - MLFLOW_PASSWORD=password1312
+      
+      # S3/MinIO Configuration
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_ENDPOINT_URL=http://192.168.31.201:9000
+      - S3_BUCKET_NAME=mlflow-artifacts
+      
+      # API Configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_TITLE=Fraud Detection API
+      - API_VERSION=1.0.0
+      - API_DESCRIPTION=MLOps REST API for fraud detection model
+      
+      # Application Configuration
+      - ENVIRONMENT=development
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - MODEL_CACHE_TTL=3600
+      - MODEL_TIMEOUT=30
+      - HEALTH_CHECK_INTERVAL=60
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Дополнительный сервис для тестирования (опционально)
+  fraud-detection-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraud-detection-test
+    ports:
+      - "8001:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - ENVIRONMENT=test
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["python", "-m", "src.api_simple"]
+    profiles:
+      - test
+
