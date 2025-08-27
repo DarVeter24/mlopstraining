@@ -1,8 +1,6 @@
 """Упрощенная версия FastAPI для тестирования без загрузки модели."""
 
-import time
 from datetime import datetime
-from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
@@ -91,8 +89,6 @@ async def health_check():
 async def predict_fraud(transaction: TransactionData):
     """Predict fraud for a transaction (TEST MODE - mock predictions)."""
     try:
-        start_time = time.time()
-
         # MOCK PREDICTION LOGIC для тестирования
         # В реальном режиме здесь будет вызов модели
 
@@ -101,8 +97,6 @@ async def predict_fraud(transaction: TransactionData):
         is_fraud = transaction.tx_amount > 1000.0 or transaction.tx_fraud_scenario == 1
         fraud_probability = 0.8 if is_fraud else 0.2
         confidence = 0.9  # Высокая уверенность для демо
-
-        prediction_time = time.time() - start_time
 
         return FraudPredictionResponse(
             transaction_id=transaction.transaction_id,

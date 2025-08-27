@@ -2,11 +2,6 @@
 Тесты для модуля конфигурации
 """
 
-import os
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 
 class TestConfig:
     """Тесты для класса Config"""

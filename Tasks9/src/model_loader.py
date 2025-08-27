@@ -78,7 +78,8 @@ class ModelLoader:
             try:
                 client = mlflow.tracking.MlflowClient()
                 if config.MLFLOW_MODEL_RUN_ID:
-                    run = client.get_run(config.MLFLOW_MODEL_RUN_ID)
+                    # Get run info but don't store it
+                    client.get_run(config.MLFLOW_MODEL_RUN_ID)
                     self.model_version = f"run_{config.MLFLOW_MODEL_RUN_ID[:8]}"
                 else:
                     versions = client.get_latest_versions(

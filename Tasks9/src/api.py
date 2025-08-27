@@ -3,11 +3,9 @@
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from .config import config
@@ -140,7 +138,6 @@ async def health_check():
 @app.post("/predict", response_model=FraudPredictionResponse)
 async def predict_fraud(transaction: TransactionData):
     """Predict fraud for a transaction."""
-    global model
 
     if model is None:
         raise HTTPException(
@@ -186,7 +183,8 @@ async def predict_fraud(transaction: TransactionData):
 
         if config.ENABLE_PERFORMANCE_LOGGING:
             logger.info(
-                f"Prediction completed in {prediction_time:.3f}s for transaction {transaction.transaction_id}"
+                f"Prediction completed in {prediction_time:.3f}s "
+                f"for transaction {transaction.transaction_id}"
             )
 
         return FraudPredictionResponse(
