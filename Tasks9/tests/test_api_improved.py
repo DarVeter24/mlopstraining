@@ -1,16 +1,12 @@
 """Tests for the improved API with fallback support."""
 
 import os
-from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 
 
 def test_import_api_improved():
     """Test that api_improved file exists."""
-    import os
-
     api_file = os.path.join(os.path.dirname(__file__), "..", "src", "api_improved.py")
     assert os.path.exists(api_file), "api_improved.py should exist"
 

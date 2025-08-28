@@ -5,7 +5,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status
@@ -223,7 +223,6 @@ class HealthResponse(BaseModel):
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""
-    global model, model_type
 
     model_loaded = model is not None
     model_version = "unknown"
@@ -234,7 +233,7 @@ async def health_check():
         try:
             model_info = model_loader.get_model_info()
             model_version = model_info.get("model_version", "unknown")
-        except:
+        except Exception:
             model_version = "mlflow-unknown"
 
     return HealthResponse(
@@ -250,7 +249,6 @@ async def health_check():
 @app.post("/predict", response_model=FraudPredictionResponse)
 async def predict_fraud(transaction: TransactionData):
     """Predict fraud for a transaction."""
-    global model, model_type
 
     if model is None:
         raise HTTPException(
@@ -307,7 +305,7 @@ async def predict_fraud(transaction: TransactionData):
             try:
                 model_info = model_loader.get_model_info()
                 model_version = model_info.get("model_version", "unknown")
-            except:
+            except Exception:
                 model_version = "mlflow-unknown"
 
         prediction_time = time.time() - start_time

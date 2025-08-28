@@ -4,7 +4,6 @@ This ensures the service starts even if MLflow is down.
 """
 
 import logging
-import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict
 
@@ -146,7 +145,6 @@ app = FastAPI(
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    global model
 
     model_status = (
         "loaded"
@@ -167,7 +165,6 @@ async def health_check():
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_fraud(transaction: TransactionData):
     """Predict fraud probability for a transaction."""
-    global model
 
     if not model:
         raise HTTPException(status_code=503, detail="Model not loaded")
