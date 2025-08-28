@@ -60,5 +60,10 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Запускаем приложение
-CMD ["python", "-m", "src.api"]
+# Переменные для fallback
+ENV USE_MOCK_MODEL=false
+ENV MODEL_LOAD_TIMEOUT=60
+
+# Команда запуска с улучшенной версией API
+CMD ["python", "-m", "src.api_improved"]
 

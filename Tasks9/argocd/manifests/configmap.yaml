@@ -25,6 +25,10 @@ data:
   AWS_DEFAULT_REGION: "us-east-1"
   MLFLOW_S3_ENDPOINT_URL: "http://minio.darveter.com:9000"
   
+  # Fallback Configuration
+  USE_MOCK_MODEL: "true"
+  MODEL_LOAD_TIMEOUT: "30"
+  
   # Model Configuration
   MODEL_NAME: "fraud_detection_model"
   MODEL_VERSION: "latest"

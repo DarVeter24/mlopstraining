@@ -101,6 +101,16 @@ spec:
             configMapKeyRef:
               name: tasks9-fraud-detection-config
               key: MODEL_VERSION
+        - name: USE_MOCK_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: tasks9-fraud-detection-config
+              key: USE_MOCK_MODEL
+        - name: MODEL_LOAD_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: tasks9-fraud-detection-config
+              key: MODEL_LOAD_TIMEOUT
         resources:
           requests:
             memory: "512Mi"

@@ -44,6 +44,8 @@ class Config:
     # Model Configuration (in-memory only)
     MODEL_CACHE_TTL: int = int(os.getenv("MODEL_CACHE_TTL", "3600"))
     MODEL_TIMEOUT: int = int(os.getenv("MODEL_TIMEOUT", "30"))
+    USE_MOCK_MODEL: bool = os.getenv("USE_MOCK_MODEL", "false").lower() == "true"
+    MODEL_LOAD_TIMEOUT: int = int(os.getenv("MODEL_LOAD_TIMEOUT", "30"))
 
     # Health Check Configuration
     HEALTH_CHECK_INTERVAL: int = int(os.getenv("HEALTH_CHECK_INTERVAL", "60"))
