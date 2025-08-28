@@ -263,16 +263,22 @@ async def predict_fraud(transaction: TransactionData):
         start_time = time.time()
 
         # Prepare input data for model as DataFrame
-        input_data = pd.DataFrame([{
-            "customer_id": transaction.customer_id,
-            "terminal_id": transaction.terminal_id,
-            "tx_amount": transaction.tx_amount,
-            "tx_time_seconds": transaction.tx_time_seconds,
-            "tx_time_days": transaction.tx_time_days,
-            "tx_fraud_scenario": transaction.tx_fraud_scenario,
-        }])
+        input_data = pd.DataFrame(
+            [
+                {
+                    "customer_id": transaction.customer_id,
+                    "terminal_id": transaction.terminal_id,
+                    "tx_amount": transaction.tx_amount,
+                    "tx_time_seconds": transaction.tx_time_seconds,
+                    "tx_time_days": transaction.tx_time_days,
+                    "tx_fraud_scenario": transaction.tx_fraud_scenario,
+                }
+            ]
+        )
 
-        logger.debug(f"Input data for prediction: {input_data.to_dict('records')[0]}")
+        logger.debug(
+            f"Input data for prediction: {input_data.to_dict('records')[0]}"
+        )
 
         # Make prediction
         if model_type == "mock":
@@ -281,7 +287,11 @@ async def predict_fraud(transaction: TransactionData):
         else:
             # MLflow model
             prediction_result = model.predict(input_data)
-            fraud_probability = float(prediction_result[0]) if isinstance(prediction_result, (list, tuple)) else float(prediction_result)
+            fraud_probability = (
+                float(prediction_result[0])
+                if isinstance(prediction_result, (list, tuple))
+                else float(prediction_result)
+            )
 
         # Ensure probability is in [0, 1] range
         fraud_probability = max(0.0, min(1.0, fraud_probability))
@@ -305,7 +315,7 @@ async def predict_fraud(transaction: TransactionData):
 
         prediction_time = time.time() - start_time
 
-        if getattr(config, 'ENABLE_PERFORMANCE_LOGGING', True):
+        if getattr(config, "ENABLE_PERFORMANCE_LOGGING", True):
             logger.info(
                 f"Prediction completed in {prediction_time:.3f}s "
                 f"for transaction {transaction.transaction_id} "
@@ -324,7 +334,8 @@ async def predict_fraud(transaction: TransactionData):
 
     except Exception as e:
         logger.error(
-            f"❌ Prediction failed for transaction {transaction.transaction_id}: {e}"
+            f"❌ Prediction failed for transaction "
+            f"{transaction.transaction_id}: {e}"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
