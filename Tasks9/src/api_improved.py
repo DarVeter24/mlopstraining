@@ -5,7 +5,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status
@@ -21,43 +21,43 @@ logger = logging.getLogger(__name__)
 
 class MockModel:
     """Mock model for fallback when MLflow is unavailable."""
-    
+
     def __init__(self):
         self.version = "mock-v1.0"
         self.loaded = True
         logger.info("🎭 Mock model initialized for fallback")
-    
+
     def predict(self, data: pd.DataFrame) -> list:
         """Generate mock prediction based on simple rules."""
         try:
             row = data.iloc[0]
-            tx_amount = row.get('tx_amount', 0)
-            tx_time_seconds = row.get('tx_time_seconds', 0)
-            customer_id = row.get('customer_id', 0)
-            
+            tx_amount = row.get("tx_amount", 0)
+            tx_time_seconds = row.get("tx_time_seconds", 0)
+            customer_id = row.get("customer_id", 0)
+
             # Simple rule-based mock logic
             fraud_score = 0.0
-            
+
             # Large amounts are more suspicious
             if tx_amount > 1000:
                 fraud_score += 0.3
             elif tx_amount > 500:
                 fraud_score += 0.1
-                
+
             # Odd hours (night time) are more suspicious
             hour = (tx_time_seconds // 3600) % 24
             if hour < 6 or hour > 22:
                 fraud_score += 0.2
-                
+
             # Customer ID patterns (simple check)
             if customer_id % 100 < 5:  # 5% of customers flagged as high-risk
                 fraud_score += 0.4
-                
+
             # Cap the score and add some randomness
             fraud_score = min(fraud_score + (hash(str(customer_id)) % 10) / 100, 0.95)
-            
+
             return [fraud_score]
-            
+
         except Exception as e:
             logger.error(f"Mock prediction error: {e}")
             return [0.2]  # Safe default
@@ -71,37 +71,36 @@ model_type: str = "unknown"
 async def load_model_with_fallback():
     """Load model with timeout and fallback to mock model."""
     global model, model_type
-    
+
     timeout = config.MODEL_LOAD_TIMEOUT
     use_mock = config.USE_MOCK_MODEL
-    
+
     if use_mock:
         logger.info("🎭 Using mock model (USE_MOCK_MODEL=true)")
         model = MockModel()
         model_type = "mock"
         return
-    
+
     try:
         logger.info(f"📦 Loading ML model (timeout: {timeout}s)...")
-        
+
         # Try to load real model with timeout
         model = await asyncio.wait_for(
-            asyncio.to_thread(model_loader.load_model),
-            timeout=timeout
+            asyncio.to_thread(model_loader.load_model), timeout=timeout
         )
-        
+
         if model is not None:
             logger.info("✅ Real MLflow model loaded successfully")
             model_type = "mlflow"
         else:
             raise Exception("Model loader returned None")
-            
+
     except asyncio.TimeoutError:
         logger.warning(f"⏰ Model loading timed out after {timeout}s")
         logger.info("🎭 Falling back to mock model")
         model = MockModel()
         model_type = "mock"
-        
+
     except Exception as e:
         logger.error(f"❌ Failed to load real model: {e}")
         logger.info("🎭 Falling back to mock model")
@@ -115,26 +114,26 @@ async def lifespan(app: FastAPI):
     # Startup
     global model, model_type
     logger.info("🚀 Starting Fraud Detection API...")
-    
+
     try:
         # Validate configuration
         config.validate_config()
         logger.info("✅ Configuration validated")
-        
+
         # Load model (with fallback)
         await load_model_with_fallback()
-        
+
         logger.info(f"🎯 Fraud Detection API is ready! (Model: {model_type})")
-        
+
     except Exception as e:
         logger.error(f"❌ Failed to initialize: {e}")
         # Don't raise - let the app start with mock model
         model = MockModel()
         model_type = "mock"
         logger.info("🎭 Started with emergency mock model")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down Fraud Detection API...")
 
@@ -145,7 +144,7 @@ app = FastAPI(
     version=config.API_VERSION,
     description=config.API_DESCRIPTION + " (with fallback support)",
     debug=config.DEBUG,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 
@@ -225,12 +224,12 @@ class HealthResponse(BaseModel):
 async def health_check():
     """Health check endpoint."""
     global model, model_type
-    
+
     model_loaded = model is not None
     model_version = "unknown"
-    
+
     if model_type == "mock" and model_loaded:
-        model_version = getattr(model, 'version', 'mock-v1.0')
+        model_version = getattr(model, "version", "mock-v1.0")
     elif model_type == "mlflow" and model_loaded:
         try:
             model_info = model_loader.get_model_info()
@@ -276,9 +275,7 @@ async def predict_fraud(transaction: TransactionData):
             ]
         )
 
-        logger.debug(
-            f"Input data for prediction: {input_data.to_dict('records')[0]}"
-        )
+        logger.debug(f"Input data for prediction: {input_data.to_dict('records')[0]}")
 
         # Make prediction
         if model_type == "mock":
@@ -305,7 +302,7 @@ async def predict_fraud(transaction: TransactionData):
         # Get model version
         model_version = "unknown"
         if model_type == "mock":
-            model_version = getattr(model, 'version', 'mock-v1.0')
+            model_version = getattr(model, "version", "mock-v1.0")
         else:
             try:
                 model_info = model_loader.get_model_info()

@@ -1,14 +1,16 @@
 """Tests for the improved API with fallback support."""
 
+import os
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
-import os
 
 
 def test_import_api_improved():
     """Test that api_improved file exists."""
     import os
+
     api_file = os.path.join(os.path.dirname(__file__), "..", "src", "api_improved.py")
     assert os.path.exists(api_file), "api_improved.py should exist"
 
@@ -22,7 +24,7 @@ async def test_api_improved_with_mock_model():
 def test_config_has_fallback_attributes():
     """Test that config has new fallback attributes."""
     from src.config import config
-    
+
     assert hasattr(config, "USE_MOCK_MODEL")
     assert hasattr(config, "MODEL_LOAD_TIMEOUT")
     assert isinstance(config.USE_MOCK_MODEL, bool)
