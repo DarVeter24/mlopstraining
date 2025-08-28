@@ -126,3 +126,4 @@ echo -e "   Predict: http://localhost:8000/predict"
 echo -e "   Docs: http://localhost:8000/docs"
 echo -e "${YELLOW}🛑 Для остановки используйте:${NC}"
 echo -e "   docker-compose -f docker-compose.fallback.yml down"
+
