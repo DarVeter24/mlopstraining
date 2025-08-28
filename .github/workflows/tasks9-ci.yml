@@ -136,12 +136,14 @@ jobs:
         # Проверяем что образ создался
         docker images | grep tasks9-fraud-detection-api
         
-        # Запускаем контейнер в тестовом режиме
+        # Запускаем контейнер в тестовом режиме с fallback
         docker run -d -p 8000:8000 --name tasks9-test-container \
           -e ENVIRONMENT=test \
           -e DEBUG=true \
           -e LOG_LEVEL=INFO \
-          tasks9-fraud-detection-api:test python -m src.api_simple
+          -e USE_MOCK_MODEL=true \
+          -e MODEL_LOAD_TIMEOUT=10 \
+          tasks9-fraud-detection-api:test
           
         # Ждем запуска
         sleep 10
