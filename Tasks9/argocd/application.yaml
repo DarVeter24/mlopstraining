@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tasks9-fraud-detection
+  namespace: argocd
+  labels:
+    app: fraud-detection-api
+    project: tasks9-mlops
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/DarVeter24/mlopstraining.git
+    targetRevision: HEAD
+    path: Tasks9/argocd/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tasks9-mlops
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    managedFieldsManagers:
+    - kube-controller-manager

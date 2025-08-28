@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tasks9-mlops
+  labels:
+    name: tasks9-mlops
+    app: fraud-detection
+    version: v1
+  annotations:
+    description: "MLOps namespace for Tasks9 fraud detection service"
