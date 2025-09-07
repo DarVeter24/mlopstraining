@@ -237,7 +237,7 @@ async def metrics():
 
 @app.get("/health", response_model=HealthResponse)
 @track_http_metrics("health")
-async def health_check():
+async def health_check(request: Request):
     """Health check endpoint with detailed status information."""
     global model, model_type
     
@@ -266,7 +266,7 @@ async def health_check():
 
 @app.get("/", response_model=dict)
 @track_http_metrics("root")
-async def root():
+async def root(request: Request):
     """Root endpoint with service information."""
     global model_type
     
