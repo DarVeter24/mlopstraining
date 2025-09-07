@@ -286,9 +286,8 @@ async def root(request: Request):
 
 
 @app.post("/predict", response_model=FraudPredictionResponse)
-@track_http_metrics("predict")
 @track_prediction_metrics("mock")
-async def predict_fraud(transaction: TransactionData, request: Request):
+async def predict_fraud(transaction: TransactionData):
     """Predict fraud probability for a transaction."""
     global model, model_type
     
