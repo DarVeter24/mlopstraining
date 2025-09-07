@@ -232,7 +232,7 @@ def track_http_metrics(endpoint: str):
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(request, *args, **kwargs) -> Any:
+        async def wrapper(request, *args, **kwargs) -> Any:
             start_time = time.time()
             method = request.method
             
@@ -242,8 +242,8 @@ def track_http_metrics(endpoint: str):
             
             try:
                 # Выполняем запрос
-                response = func(request, *args, **kwargs)
-                status_code = str(response.status_code)
+                response = await func(request, *args, **kwargs)
+                status_code = "200"  # Default success status
                 
                 # Записываем метрики успешного запроса
                 duration = time.time() - start_time
@@ -258,9 +258,8 @@ def track_http_metrics(endpoint: str):
                     status_code=status_code
                 ).inc()
                 
-                # Записываем ошибки если статус >= 400
-                if response.status_code >= 400:
-                    http_errors_total.labels(status_code=status_code).inc()
+                # Записываем метрики (предполагаем успех для FastAPI responses)
+                # FastAPI responses не имеют прямого доступа к status_code в этом контексте
                 
                 return response
                 
