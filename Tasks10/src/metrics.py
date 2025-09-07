@@ -185,12 +185,12 @@ def track_prediction_metrics(model_version: str = "unknown"):
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
+        async def wrapper(*args, **kwargs) -> Any:
             start_time = time.time()
             
             try:
                 # Выполняем предсказание
-                result = func(*args, **kwargs)
+                result = await func(*args, **kwargs)
                 
                 # Записываем метрики успешного предсказания
                 duration = time.time() - start_time
