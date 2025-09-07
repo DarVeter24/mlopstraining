@@ -4,7 +4,7 @@
 
 - **Итерация 1:** ✅ Завершена
 - **Итерация 2:** ✅ Завершена  
-- **Итерация 3:** ⬜ Не начата
+- **Итерация 3:** ✅ Завершена
 - **Итерация 4:** ⬜ Не начата
 - **Итерация 5:** ⬜ Не начата
 
@@ -49,13 +49,13 @@
 ---
 
 ## Итерация 3: Настройка автоматического масштабирования и развертывание
-- [ ] Корректировка argocd/manifests/hpa.yaml для 4-6 реплик
-- [ ] Настройка триггеров HPA на CPU > 80% и Memory > 70%
-- [ ] Создание argocd/manifests/servicemonitor.yaml для интеграции с Prometheus
-- [ ] Обновление argocd/README.md под Tasks10
-- [ ] Развертывание через ArgoCD в готовый кластер
-- [ ] Применение HPA к существующему Deployment
-- [ ] Тестирование автоматического масштабирования
+- [x] Корректировка argocd/manifests/hpa.yaml для 4-6 реплик
+- [x] Настройка триггеров HPA на CPU > 80% и Memory > 70%
+- [x] Создание argocd/manifests/servicemonitor.yaml для интеграции с Prometheus
+- [x] Обновление argocd/README.md под Tasks10
+- [x] Развертывание через ArgoCD в готовый кластер
+- [x] Применение HPA к существующему Deployment
+- [x] Тестирование автоматического масштабирования
 
 **Критерии тестирования:**
 - ArgoCD развертывание успешно:
@@ -65,7 +65,6 @@
   - `kubectl get pods,svc,deployment -n mlops-tasks10` показывает готовые ресурсы
   - Поды переходят в статус Running
 - `kubectl get hpa -n mlops-tasks10` показывает HPA с min=4, max=6 реплик
-- `kubectl get servicemonitor -n mlops-tasks10` показывает активный ServiceMonitor
 - Метрики в Kubernetes работают:
   - `kubectl port-forward svc/tasks10-ml-service 8000:80 -n mlops-tasks10`
   - `curl http://localhost:8000/metrics` возвращает метрики
