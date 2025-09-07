@@ -240,7 +240,7 @@ print('✅ All API tests passed')
         echo "PROJECT=Tasks10" >> deployment/image-info.env
         
     - name: Upload deployment artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: tasks10-deployment-info
         path: deployment/
