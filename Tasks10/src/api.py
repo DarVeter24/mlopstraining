@@ -1,8 +1,11 @@
-"""FastAPI REST service for fraud detection."""
+"""FastAPI REST service for fraud detection with fallback logic."""
 
+import asyncio
 import logging
 import time
 from datetime import datetime
+from typing import Optional, Any
+from contextlib import asynccontextmanager
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status, Request, Response
@@ -22,12 +25,132 @@ from .metrics import (
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
+
+class MockModel:
+    """Mock model for fallback when MLflow is unavailable."""
+
+    def __init__(self):
+        self.version = "mock-v1.0"
+        self.loaded = True
+        logger.info("🎭 Mock model initialized for fallback")
+
+    def predict(self, data: pd.DataFrame) -> list:
+        """Generate mock prediction based on simple rules."""
+        try:
+            row = data.iloc[0]
+            tx_amount = row.get("tx_amount", 0)
+            tx_time_seconds = row.get("tx_time_seconds", 0)
+            customer_id = row.get("customer_id", 0)
+
+            # Simple rule-based mock logic
+            fraud_score = 0.0
+
+            # Large amounts are more suspicious
+            if tx_amount > 1000:
+                fraud_score += 0.3
+            elif tx_amount > 500:
+                fraud_score += 0.1
+
+            # Odd hours (night time) are more suspicious
+            hour = (tx_time_seconds // 3600) % 24
+            if hour < 6 or hour > 22:
+                fraud_score += 0.2
+
+            # Customer ID patterns (simple check)
+            if customer_id % 100 < 5:  # 5% of customers flagged as high-risk
+                fraud_score += 0.4
+
+            # Cap the score and add some randomness
+            fraud_score = min(fraud_score + (hash(str(customer_id)) % 10) / 100, 0.95)
+
+            return [fraud_score]
+
+        except Exception as e:
+            logger.error(f"Mock prediction error: {e}")
+            return [0.2]  # Safe default
+
+
+# Global model instance
+model: Optional[Any] = None
+model_type: str = "unknown"
+
+
+async def load_model_with_fallback():
+    """Load model with fallback to mock model."""
+    global model, model_type
+    
+    # Check if we should use mock model directly
+    if config.USE_MOCK_MODEL:
+        logger.info("🎭 USE_MOCK_MODEL=true, using mock model")
+        model = MockModel()
+        model_type = "mock"
+        return
+
+    try:
+        timeout = config.MODEL_LOAD_TIMEOUT
+        logger.info(f"📦 Loading ML model (timeout: {timeout}s)...")
+
+        # Try to load real model with timeout
+        model = await asyncio.wait_for(
+            asyncio.to_thread(model_loader.load_model), timeout=timeout
+        )
+
+        if model is not None:
+            logger.info("✅ Real MLflow model loaded successfully")
+            model_type = "mlflow"
+        else:
+            raise Exception("Model loader returned None")
+
+    except asyncio.TimeoutError:
+        logger.warning(f"⏰ Model loading timed out after {timeout}s")
+        logger.info("🎭 Falling back to mock model")
+        model = MockModel()
+        model_type = "mock"
+
+    except Exception as e:
+        logger.error(f"❌ Failed to load real model: {e}")
+        logger.info("🎭 Falling back to mock model")
+        model = MockModel()
+        model_type = "mock"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup
+    global model, model_type
+    logger.info("�� Starting Tasks10 ML API with Monitoring...")
+
+    try:
+        # Validate configuration
+        config.validate_config()
+        logger.info("✅ Configuration validated")
+
+        # Load model (with fallback)
+        await load_model_with_fallback()
+
+        logger.info(f"🎯 Tasks10 ML API is ready! (Model: {model_type})")
+
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize: {e}")
+        # Even if config validation fails, we can still start with mock model
+        logger.info("🎭 Starting with mock model as last resort")
+        model = MockModel()
+        model_type = "mock"
+
+    yield
+
+    # Shutdown
+    logger.info("🛑 Shutting down Tasks10 ML API...")
+
+
+# Create FastAPI app with lifespan
 app = FastAPI(
     title=config.API_TITLE,
     version=config.API_VERSION,
     description=config.API_DESCRIPTION,
     debug=config.DEBUG,
+    lifespan=lifespan,
 )
 
 
@@ -48,16 +171,16 @@ class TransactionData(BaseModel):
         ..., ge=0, description="Transaction day number since reference date"
     )
     tx_fraud_scenario: int = Field(
-        0, ge=0, le=1, description="Fraud scenario indicator (0=normal, 1=fraud test)"
+        ..., ge=0, description="Fraud scenario identifier (0=normal)"
     )
 
     class Config:
         json_schema_extra = {
             "example": {
-                "transaction_id": "tx_12345",
-                "customer_id": 1001,
-                "terminal_id": 2001,
-                "tx_amount": 150.50,
+                "transaction_id": "tx_001",
+                "customer_id": 123,
+                "terminal_id": 456,
+                "tx_amount": 150.0,
                 "tx_time_seconds": 1705312200,
                 "tx_time_days": 19723,
                 "tx_fraud_scenario": 0,
@@ -66,26 +189,30 @@ class TransactionData(BaseModel):
 
 
 class FraudPredictionResponse(BaseModel):
-    """Response model for fraud detection."""
+    """Response model for fraud prediction."""
 
     transaction_id: str = Field(..., description="Transaction identifier")
-    is_fraud: bool = Field(..., description="Whether transaction is predicted as fraud")
     fraud_probability: float = Field(
-        ..., ge=0, le=1, description="Probability of fraud (0-1)"
+        ..., ge=0.0, le=1.0, description="Probability of fraud (0-1)"
     )
-    confidence: float = Field(..., ge=0, le=1, description="Model confidence score")
-    model_version: str = Field(..., description="Model version used for prediction")
-    prediction_time: str = Field(..., description="ISO timestamp of prediction")
+    risk_level: str = Field(..., description="Risk level: low, medium, high")
+    model_version: str = Field(..., description="Model version used")
+    model_type: str = Field(..., description="Model type: mlflow or mock")
+    prediction_time: str = Field(..., description="Prediction timestamp")
+    confidence_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Model confidence score"
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
-                "transaction_id": "tx_12345",
-                "is_fraud": False,
+                "transaction_id": "tx_001",
                 "fraud_probability": 0.15,
-                "confidence": 0.85,
+                "risk_level": "low",
                 "model_version": "v1.2.3",
+                "model_type": "mlflow",
                 "prediction_time": "2024-01-15T10:30:00Z",
+                "confidence_score": 0.85,
             }
         }
 
@@ -94,38 +221,11 @@ class HealthResponse(BaseModel):
     """Health check response model."""
 
     status: str = Field(..., description="Service status")
-    timestamp: str = Field(..., description="Current timestamp")
-    model_loaded: bool = Field(..., description="Whether model is loaded")
-    model_version: str = Field(..., description="Loaded model version")
+    model_loaded: bool = Field(..., description="Model loading status")
+    model_type: str = Field(..., description="Type of loaded model")
+    version: str = Field(..., description="API version")
+    timestamp: str = Field(..., description="Health check timestamp")
     environment: str = Field(..., description="Environment (dev/prod)")
-
-
-# Global model instance
-model = None
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize the application on startup."""
-    global model
-
-    try:
-        logger.info("🚀 Starting Tasks10 ML API with Monitoring...")
-
-        # Validate configuration
-        config.validate_config()
-        logger.info("✅ Configuration validated")
-
-        # Load the model
-        logger.info("📦 Loading ML model...")
-        model = model_loader.load_model()
-        logger.info("✅ ML model loaded successfully")
-
-        logger.info("🎯 Tasks10 ML API is ready!")
-
-    except Exception as e:
-        logger.error(f"❌ Failed to start application: {e}")
-        raise RuntimeError(f"Application startup failed: {e}")
 
 
 @app.get("/metrics")
@@ -137,119 +237,118 @@ async def metrics():
 
 @app.get("/health", response_model=HealthResponse)
 @track_http_metrics("health")
-async def health_check(request: Request):
-    """Health check endpoint."""
-    model_info = model_loader.get_model_info()
+async def health_check():
+    """Health check endpoint with detailed status information."""
+    global model, model_type
+    
+    try:
+        # Update system metrics
+        update_system_metrics()
+        
+        model_loaded = model is not None
+        current_model_type = model_type if model_loaded else "none"
+        
+        return HealthResponse(
+            status="healthy" if model_loaded else "degraded",
+            model_loaded=model_loaded,
+            model_type=current_model_type,
+            version=config.API_VERSION,
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            environment=config.ENVIRONMENT,
+        )
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Health check failed: {str(e)}",
+        )
 
-    return HealthResponse(
-        status="healthy" if model_info["model_loaded"] else "unhealthy",
-        timestamp=datetime.utcnow().isoformat() + "Z",
-        model_loaded=model_info["model_loaded"],
-        model_version=model_info["model_version"],
-        environment=config.ENVIRONMENT,
-    )
+
+@app.get("/", response_model=dict)
+@track_http_metrics("root")
+async def root():
+    """Root endpoint with service information."""
+    global model_type
+    
+    return {
+        "service": "Tasks10 ML API with Monitoring",
+        "version": config.API_VERSION,
+        "model_type": model_type,
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "predict": "/predict",
+            "metrics": "/metrics",
+            "docs": "/docs",
+        },
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
 
 
 @app.post("/predict", response_model=FraudPredictionResponse)
 @track_http_metrics("predict")
-async def predict_fraud(request: Request, transaction: TransactionData):
-    """Predict fraud for a transaction."""
-
+@track_prediction_metrics
+async def predict_fraud(transaction: TransactionData):
+    """Predict fraud probability for a transaction."""
+    global model, model_type
+    
     if model is None:
+        logger.error("Model not loaded")
+        ml_model_errors_total.labels(error_type="ModelNotLoaded").inc()
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model not loaded. Service unavailable.",
+            detail="Model not available",
         )
 
     try:
         start_time = time.time()
 
-        # Prepare input data for Spark ML model as DataFrame
-        input_data = pd.DataFrame(
-            [
-                {
-                    "customer_id": transaction.customer_id,
-                    "terminal_id": transaction.terminal_id,
-                    "tx_amount": transaction.tx_amount,
-                    "tx_time_seconds": transaction.tx_time_seconds,
-                    "tx_time_days": transaction.tx_time_days,
-                    "tx_fraud_scenario": transaction.tx_fraud_scenario,
-                }
-            ]
-        )
+        # Convert to DataFrame for model input
+        input_data = pd.DataFrame([transaction.dict()])
 
-        logger.debug(f"Input data for prediction: {input_data.to_dict('records')[0]}")
+        # Make prediction
+        prediction = model.predict(input_data)
+        fraud_probability = float(prediction[0]) if prediction else 0.0
 
-        # Get model version for metrics
-        model_info = model_loader.get_model_info()
-        model_version = model_info["model_version"]
-        
-        # Use prediction metrics decorator function
-        @track_prediction_metrics(model_version)
-        def make_prediction():
-            # Make prediction using MLflow PyFunc model (Spark ML Pipeline)
-            prediction = model.predict(input_data)[0]
+        # Determine risk level
+        if fraud_probability >= 0.7:
+            risk_level = "high"
+        elif fraud_probability >= 0.3:
+            risk_level = "medium"
+        else:
+            risk_level = "low"
 
-            # For Spark ML binary classification, prediction is typically 0.0 or 1.0
-            fraud_probability = float(prediction)
+        # Calculate confidence score (simplified)
+        confidence_score = min(0.95, 0.7 + abs(fraud_probability - 0.5))
 
-            # Determine if transaction is fraud
-            is_fraud = fraud_probability >= 0.5
+        # Get model version
+        model_version = getattr(model, "version", "unknown")
 
-            # For binary predictions, confidence is absolute difference from 0.5
-            confidence = abs(fraud_probability - 0.5) * 2  # Scale to 0-1 range
-            
-            return {
-                "is_fraud": is_fraud,
-                "fraud_probability": fraud_probability,
-                "confidence": confidence
-            }
-        
-        # Execute prediction with metrics tracking
-        result = make_prediction()
-        
         prediction_time = time.time() - start_time
-
-        if config.ENABLE_PERFORMANCE_LOGGING:
-            logger.info(
-                f"Prediction completed in {prediction_time:.3f}s "
-                f"for transaction {transaction.transaction_id}"
-            )
+        logger.info(
+            f"✅ Prediction completed for {transaction.transaction_id}: "
+            f"fraud_prob={fraud_probability:.3f}, risk={risk_level}, "
+            f"time={prediction_time:.3f}s, model={model_type}"
+        )
 
         return FraudPredictionResponse(
             transaction_id=transaction.transaction_id,
-            is_fraud=result["is_fraud"],
-            fraud_probability=result["fraud_probability"],
-            confidence=result["confidence"],
+            fraud_probability=fraud_probability,
+            risk_level=risk_level,
             model_version=model_version,
+            model_type=model_type,
             prediction_time=datetime.utcnow().isoformat() + "Z",
+            confidence_score=confidence_score,
         )
 
     except Exception as e:
-        # Record error metrics
-        error_type = type(e).__name__
-        ml_model_errors_total.labels(error_type=error_type).inc()
-        
-        logger.error(
-            f"❌ Prediction failed for transaction {transaction.transaction_id}: {e}"
-        )
+        # Record error metric
+        ml_model_errors_total.labels(error_type=e.__class__.__name__).inc()
+        logger.error(f"❌ Prediction failed for transaction {transaction.transaction_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}",
         )
-
-
-@app.get("/")
-@track_http_metrics("root")
-async def root(request: Request):
-    """Root endpoint with API information."""
-    return {
-        "message": "Tasks10 ML API with Monitoring",
-        "version": config.API_VERSION,
-        "docs": "/docs",
-        "health": "/health",
-        "metrics": "/metrics",
-    }
 
 
 if __name__ == "__main__":
