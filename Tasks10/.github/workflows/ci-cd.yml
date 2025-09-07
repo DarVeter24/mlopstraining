@@ -1,19 +1,19 @@
-name: CI/CD Pipeline
+name: Tasks10 ML API CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
     paths: 
-      - 'Tasks9/**'  # Запускается только при изменениях в Tasks9/
+      - 'Tasks10/**'  # Запускается только при изменениях в Tasks10/
   pull_request:
     branches: [ main ]
     paths:
-      - 'Tasks9/**'  # Запускается только при изменениях в Tasks9/
+      - 'Tasks10/**'  # Запускается только при изменениях в Tasks10/
   workflow_dispatch: # Позволяет запускать вручную
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/fraud-detection-api
+  IMAGE_NAME: ${{ github.repository }}/tasks10-ml-service-api
 
 jobs:
   # Этап 1: Тестирование кода
@@ -36,18 +36,20 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('Tasks10/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
           
     - name: Install dependencies
       run: |
+        cd Tasks10
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-cov pytest-asyncio httpx
         
     - name: Create test environment file
       run: |
+        cd Tasks10
         cp env-example .env
         # Настройка тестовых переменных
         echo "ENVIRONMENT=test" >> .env
@@ -56,17 +58,39 @@ jobs:
         
     - name: Run unit tests
       run: |
+        cd Tasks10
         python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
         
     - name: Test API endpoints (simple mode)
       run: |
-        python test_simple_api.py
+        cd Tasks10
+        python -c "
+import asyncio
+import httpx
+from src.api import app
+from fastapi.testclient import TestClient
+
+client = TestClient(app)
+
+# Test health endpoint
+response = client.get('/health')
+assert response.status_code == 200
+print('✅ Health endpoint OK')
+
+# Test metrics endpoint  
+response = client.get('/metrics')
+assert response.status_code == 200
+assert 'ml_model_predictions_total' in response.text
+print('✅ Metrics endpoint OK')
+
+print('✅ All API tests passed')
+        "
         
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.12'
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage.xml
+        file: ./Tasks10/coverage.xml
         flags: unittests
         name: codecov-umbrella
 
@@ -88,16 +112,24 @@ jobs:
         pip install flake8 black isort mypy
         
     - name: Run Black (code formatter)
-      run: black --check --diff src/ tests/
+      run: |
+        cd Tasks10
+        black --check --diff src/ tests/
       
     - name: Run isort (import sorter)
-      run: isort --check-only --diff src/ tests/
+      run: |
+        cd Tasks10
+        isort --check-only --diff src/ tests/
       
     - name: Run flake8 (linter)
-      run: flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+      run: |
+        cd Tasks10
+        flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503
       
     - name: Run mypy (type checker)
-      run: mypy src/ --ignore-missing-imports --no-strict-optional
+      run: |
+        cd Tasks10
+        mypy src/ --ignore-missing-imports --no-strict-optional
 
   # Этап 3: Сборка и тестирование Docker образа
   docker-test:
@@ -113,9 +145,9 @@ jobs:
     - name: Build Docker image for testing
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: ./Tasks10
         push: false
-        tags: fraud-detection-api:test
+        tags: tasks10-ml-api:test
         cache-from: type=gha
         cache-to: type=gha,mode=max
         
@@ -126,18 +158,28 @@ jobs:
           -e ENVIRONMENT=test \
           -e DEBUG=true \
           -e LOG_LEVEL=INFO \
-          fraud-detection-api:test python -m src.api_simple
+          tasks10-ml-api:test
           
         # Ждем запуска
-        sleep 10
+        sleep 15
         
         # Тестируем health endpoint
         curl -f http://localhost:8000/health || exit 1
+        echo "✅ Health endpoint OK"
+        
+        # Тестируем metrics endpoint
+        curl -f http://localhost:8000/metrics || exit 1
+        echo "✅ Metrics endpoint OK"
+        
+        # Проверяем наличие метрик в ответе
+        curl -s http://localhost:8000/metrics | grep -q "ml_model_predictions_total" || exit 1
+        echo "✅ ML metrics present"
         
         # Тестируем predict endpoint
         curl -f -X POST http://localhost:8000/predict \
           -H "Content-Type: application/json" \
           -d '{"transaction_id":"ci_test","customer_id":1,"terminal_id":1,"tx_amount":100,"tx_time_seconds":1705312200,"tx_time_days":19723,"tx_fraud_scenario":0}' || exit 1
+        echo "✅ Predict endpoint OK"
           
         # Останавливаем контейнер
         docker stop test-container
@@ -179,7 +221,7 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: ./Tasks10
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -193,11 +235,12 @@ jobs:
         echo "IMAGE_TAG=${{ steps.meta.outputs.tags }}" > deployment/image-info.env
         echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> deployment/image-info.env
         echo "GIT_SHA=${{ github.sha }}" >> deployment/image-info.env
+        echo "PROJECT=Tasks10" >> deployment/image-info.env
         
     - name: Upload deployment artifact
       uses: actions/upload-artifact@v3
       with:
-        name: deployment-info
+        name: tasks10-deployment-info
         path: deployment/
 
   # Этап 5: Уведомление об успешном деплое
@@ -209,9 +252,10 @@ jobs:
     - name: Notify deployment status
       run: |
         if [ "${{ needs.build-and-push.result }}" == "success" ]; then
-          echo "✅ Deployment successful! Image pushed to registry."
+          echo "✅ Tasks10 ML API deployment successful! Image pushed to registry."
           echo "🚀 Ready for ArgoCD sync"
+          echo "📊 Prometheus metrics enabled"
         else
-          echo "❌ Deployment failed!"
+          echo "❌ Tasks10 ML API deployment failed!"
           exit 1
         fi

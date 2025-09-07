@@ -1,14 +1,14 @@
-name: Security Scan
+name: Tasks10 Security Scan
 
 on:
   push:
     branches: [ main, develop ]
     paths: 
-      - 'Tasks9/**'  # Запускается только при изменениях в Tasks9/
+      - 'Tasks10/**'  # Запускается только при изменениях в Tasks10/
   pull_request:
     branches: [ main ]
     paths:
-      - 'Tasks9/**'  # Запускается только при изменениях в Tasks9/
+      - 'Tasks10/**'  # Запускается только при изменениях в Tasks10/
   schedule:
     # Запускаем каждую неделю в понедельник в 02:00 UTC
     - cron: '0 2 * * 1'
@@ -33,20 +33,22 @@ jobs:
         
     - name: Run Safety (dependency vulnerability scan)
       run: |
+        cd Tasks10
         pip install -r requirements.txt
         safety check --json --output safety-report.json || true
         
     - name: Run Bandit (security linter)
       run: |
+        cd Tasks10
         bandit -r src/ -f json -o bandit-report.json || true
         
     - name: Upload security reports
       uses: actions/upload-artifact@v3
       with:
-        name: security-reports
+        name: tasks10-security-reports
         path: |
-          safety-report.json
-          bandit-report.json
+          Tasks10/safety-report.json
+          Tasks10/bandit-report.json
 
   # Сканирование Docker образа на уязвимости
   docker-security-scan:
@@ -56,12 +58,14 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Build Docker image
-      run: docker build -t fraud-detection-api:security-scan .
+      run: |
+        cd Tasks10
+        docker build -t tasks10-ml-api:security-scan .
       
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'fraud-detection-api:security-scan'
+        image-ref: 'tasks10-ml-api:security-scan'
         format: 'sarif'
         output: 'trivy-results.sarif'
         
