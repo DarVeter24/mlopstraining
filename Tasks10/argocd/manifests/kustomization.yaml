@@ -23,11 +23,11 @@ commonAnnotations:
   description: "MLOps Tasks10 ML service with monitoring"
 
 images:
-- name: ghcr.io/darveter24/mlopstraining/tasks10-ml-api
+- name: ghcr.io/darveter24/mlopstraining/tasks10-ml-service-api
   newTag: latest
 
 namespace: mlops-tasks10
 
 replicas:
-- name: tasks10-ml-service
+- name: tasks10-ml-service-api
   count: 4

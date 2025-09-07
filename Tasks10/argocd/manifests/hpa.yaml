@@ -4,7 +4,7 @@ metadata:
   name: tasks10-ml-service-hpa
   namespace: mlops-tasks10
   labels:
-    app: tasks10-ml-service
+    app: tasks10-ml-api
     component: autoscaler
 spec:
   scaleTargetRef:

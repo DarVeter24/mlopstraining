@@ -4,18 +4,18 @@ metadata:
   name: tasks10-ml-service-service
   namespace: mlops-tasks10
   labels:
-    app: tasks10-ml-service
+    app: tasks10-ml-api
     component: service
   annotations:
     # Prometheus интеграция для классического Prometheus
     prometheus.io/scrape: "true"
     prometheus.io/path: "/metrics"
-    prometheus.io/port: "8000"
+    prometheus.io/port: "80"
     prometheus.io/scheme: "http"
 spec:
   type: ClusterIP
   selector:
-    app: tasks10-ml-service
+    app: tasks10-ml-api
   ports:
   - name: http
     port: 80
