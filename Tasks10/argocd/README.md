@@ -151,8 +151,10 @@ kubectl exec -it deployment/tasks10-ml-service -n mlops-tasks10 -- \
 kubectl describe ingress tasks10-ml-api-ingress -n mlops-tasks10
 kubectl get pods -n ingress-nginx
 
-# Проверка Prometheus интеграции
-kubectl get servicemonitor tasks10-ml-service-monitor -n mlops-tasks10 -o yaml
+# Проверка Prometheus интеграции (классический Prometheus)
+# Проверить, что сервис обнаружен Prometheus через аннотации
+kubectl port-forward svc/prometheus-server 9090:80 -n prometheus
+# Открыть http://localhost:9090/targets и найти tasks10-ml-service-service
 ```
 
 ## 📚 Документация

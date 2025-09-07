@@ -12,7 +12,6 @@ resources:
 - service.yaml
 - ingress.yaml
 - hpa.yaml
-- servicemonitor.yaml
 
 commonLabels:
   app: tasks10-ml-api
