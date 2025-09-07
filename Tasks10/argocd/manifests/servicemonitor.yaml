@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tasks10-ml-service-monitor
+  namespace: mlops-tasks10
+  labels:
+    app: tasks10-ml-service
+    component: monitoring
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: tasks10-ml-service
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s
+    scheme: http
+    honorLabels: true
+  namespaceSelector:
+    matchNames:
+    - mlops-tasks10

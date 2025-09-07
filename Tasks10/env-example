@@ -1,0 +1,41 @@
+# Tasks10 ML API with Monitoring Configuration
+# Скопируйте этот файл в .env и заполните реальными значениями
+
+# MLflow Configuration
+MLFLOW_TRACKING_URI=http://mlflow.mlflow.svc.cluster.local:5000
+MLFLOW_MODEL_NAME=fraud_detection_model
+MLFLOW_MODEL_STAGE=Production
+MLFLOW_MODEL_RUN_ID=eb1baf3686bd452981925a0fa4725ab8
+MLFLOW_MODEL_ARTIFACT=fraud_model_production
+MLFLOW_USERNAME=admin
+MLFLOW_PASSWORD=password1312
+
+# S3/MinIO Configuration (для доступа к артефактам модели)
+AWS_ACCESS_KEY_ID=admin
+AWS_SECRET_ACCESS_KEY=password
+AWS_ENDPOINT_URL=http://192.168.31.201:9000
+S3_BUCKET_NAME=mlflow-artifacts
+
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+API_TITLE="Tasks10 ML API with Monitoring"
+API_VERSION="1.0.0"
+API_DESCRIPTION="MLOps REST API for fraud detection with Prometheus metrics"
+
+# Logging Configuration
+LOG_LEVEL=INFO
+
+# Model Configuration
+MODEL_CACHE_TTL=3600  # Время кэширования модели в секундах
+MODEL_TIMEOUT=30      # Таймаут для загрузки модели в секундах
+
+# Health Check Configuration
+HEALTH_CHECK_INTERVAL=60  # Интервал проверки здоровья в секундах
+
+# Environment
+ENVIRONMENT=development
+DEBUG=true
+DEBUG_MODE=true
+ENABLE_PERFORMANCE_LOGGING=true
+CLEANUP_TEMP_FILES=true

@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: tasks10-ml-service
+  namespace: mlops-tasks10
+
+resources:
+- namespace.yaml
+- configmap.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- hpa.yaml
+- servicemonitor.yaml
+
+commonLabels:
+  app: tasks10-ml-api
+  project: tasks10-mlops
+  managed-by: argocd
+
+commonAnnotations:
+  version: v1.0.0
+  description: "MLOps Tasks10 ML service with monitoring"
+
+images:
+- name: ghcr.io/darveter24/mlopstraining/tasks10-ml-api
+  newTag: latest
+
+namespace: mlops-tasks10
+
+replicas:
+- name: tasks10-ml-service
+  count: 4

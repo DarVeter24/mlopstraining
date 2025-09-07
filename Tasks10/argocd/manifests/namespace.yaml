@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlops-tasks10
+  labels:
+    name: mlops-tasks10
+    app: tasks10-ml-api
+    version: v1
+  annotations:
+    description: "MLOps namespace for Tasks10 ML service with monitoring"

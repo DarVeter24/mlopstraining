@@ -1,0 +1,94 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: tasks10-mlops-project
+  namespace: argocd
+  labels:
+    project: tasks10-mlops
+  annotations:
+    description: "MLOps project for Tasks10 ML service with monitoring"
+spec:
+  description: "Tasks10 MLOps ML API with Auto-scaling and Monitoring"
+  
+  # Разрешенные репозитории
+  sourceRepos:
+  - 'https://github.com/DarVeter24/mlopstraining.git'
+  - 'https://github.com/DarVeter24/*'
+  
+  # Разрешенные кластеры назначения
+  destinations:
+  - namespace: mlops-tasks10
+    server: https://kubernetes.default.svc
+  - namespace: tasks10-*
+    server: https://kubernetes.default.svc
+  
+  # Разрешенные роли для кластера
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: networking.k8s.io
+    kind: Ingress
+  - group: networking.k8s.io
+    kind: IngressClass
+  
+  # Разрешенные ресурсы в namespace
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: ConfigMap
+  - group: ''
+    kind: Secret
+  - group: ''
+    kind: Service
+  - group: ''
+    kind: ServiceAccount
+  - group: apps
+    kind: Deployment
+  - group: apps
+    kind: ReplicaSet
+  - group: ''
+    kind: Pod
+  - group: networking.k8s.io
+    kind: Ingress
+  - group: networking.k8s.io
+    kind: NetworkPolicy
+  - group: autoscaling
+    kind: HorizontalPodAutoscaler
+  - group: policy
+    kind: PodDisruptionBudget
+  
+  # Политики синхронизации
+  syncWindows:
+  - kind: allow
+    schedule: '* * * * *'
+    duration: 24h
+    applications:
+    - 'tasks9-*'
+    manualSync: true
+  
+  # Роли проекта
+  roles:
+  - name: admin
+    description: "Admin role for Tasks9 MLOps project"
+    policies:
+    - p, proj:tasks9-mlops-project:admin, applications, *, tasks9-mlops-project/*, allow
+    - p, proj:tasks9-mlops-project:admin, repositories, *, *, allow
+    - p, proj:tasks9-mlops-project:admin, clusters, *, *, allow
+    groups:
+    - tasks9-admins
+  
+  - name: developer
+    description: "Developer role for Tasks9 MLOps project"
+    policies:
+    - p, proj:tasks9-mlops-project:developer, applications, get, tasks9-mlops-project/*, allow
+    - p, proj:tasks9-mlops-project:developer, applications, sync, tasks9-mlops-project/*, allow
+    - p, proj:tasks9-mlops-project:developer, applications, action/*, tasks9-mlops-project/*, allow
+    groups:
+    - tasks9-developers
+  
+  - name: readonly
+    description: "Read-only role for Tasks9 MLOps project"
+    policies:
+    - p, proj:tasks9-mlops-project:readonly, applications, get, tasks9-mlops-project/*, allow
+    - p, proj:tasks9-mlops-project:readonly, repositories, get, *, allow
+    groups:
+    - tasks9-viewers

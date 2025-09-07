@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tasks10-ml-service-api
+  namespace: mlops-tasks10
+  labels:
+    app: fraud-detection-api
+    version: v1
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fraud-detection-api
+  template:
+    metadata:
+      labels:
+        app: fraud-detection-api
+        version: v1
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/health"
+    spec:
+      containers:
+      - name: fraud-detection-api
+        image: ghcr.io/darveter24/mlopstraining/tasks10-ml-service-api:latest
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: API_HOST
+        - name: API_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: API_PORT
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: ENVIRONMENT
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: DEBUG
+        - name: MLFLOW_TRACKING_URI
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MLFLOW_TRACKING_URI
+        - name: MLFLOW_EXPERIMENT_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MLFLOW_EXPERIMENT_NAME
+        - name: MLFLOW_MODEL_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MLFLOW_MODEL_NAME
+        - name: MLFLOW_MODEL_STAGE
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MLFLOW_MODEL_STAGE
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: AWS_SECRET_ACCESS_KEY
+        - name: AWS_DEFAULT_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: AWS_DEFAULT_REGION
+        - name: MLFLOW_S3_ENDPOINT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MLFLOW_S3_ENDPOINT_URL
+        - name: MODEL_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MODEL_NAME
+        - name: MODEL_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MODEL_VERSION
+        - name: USE_MOCK_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: USE_MOCK_MODEL
+        - name: MODEL_LOAD_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: tasks10-ml-service-config
+              key: MODEL_LOAD_TIMEOUT
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 30
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
