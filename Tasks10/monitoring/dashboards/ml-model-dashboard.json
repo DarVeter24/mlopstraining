@@ -39,7 +39,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Количество предсказаний в минуту по типам результата",
       "fieldConfig": {
@@ -130,7 +130,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Среднее время выполнения предсказаний в миллисекундах",
       "fieldConfig": {
@@ -213,7 +213,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "HTTP запросы в секунду по эндпоинтам",
       "fieldConfig": {
@@ -300,7 +300,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Процент HTTP ошибок (4xx, 5xx) от общего количества запросов",
       "fieldConfig": {
@@ -385,7 +385,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Использование CPU и памяти подами ML API",
       "fieldConfig": {
@@ -503,7 +503,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Количество активных реплик и лимиты HPA",
       "fieldConfig": {
@@ -635,7 +635,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Длина очереди Kafka и лаг потребителя",
       "fieldConfig": {
@@ -755,7 +755,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "prometheus"
+          "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(ml_model_predictions_total, namespace)",
         "hide": 0,

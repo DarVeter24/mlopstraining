@@ -197,18 +197,18 @@ def track_prediction_metrics(model_version: str = "unknown"):
                 ml_model_prediction_duration.observe(duration)
                 
                 # Определяем результат предсказания
-                prediction_result = "fraud" if result.get("is_fraud", False) else "legitimate"
+                prediction_result = "fraud" if result.is_fraud else "legitimate"
                 ml_model_predictions_total.labels(
                     model_version=model_version,
                     prediction_result=prediction_result
                 ).inc()
                 
                 # Записываем распределения
-                if "fraud_probability" in result:
-                    ml_model_fraud_probability.observe(result["fraud_probability"])
+                if hasattr(result, "fraud_probability") and result.fraud_probability is not None:
+                    ml_model_fraud_probability.observe(result.fraud_probability)
                 
-                if "confidence" in result:
-                    ml_model_confidence_score.observe(result["confidence"])
+                if hasattr(result, "confidence") and result.confidence is not None:
+                    ml_model_confidence_score.observe(result.confidence)
                 
                 return result
                 
