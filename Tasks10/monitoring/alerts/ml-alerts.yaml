@@ -1,0 +1,198 @@
+groups:
+  - name: tasks10-ml-model-alerts
+    rules:
+      # 🔥 CRITICAL ALERTS - требуют немедленного внимания
+      
+      - alert: HighCPUUsage
+        expr: ml_model_cpu_usage{namespace="mlops-tasks10"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: tasks10-ml-api
+          alert_type: performance
+        annotations:
+          summary: "High CPU usage detected in Tasks10 ML API"
+          description: "CPU usage is {{ $value }}% on instance {{ $labels.instance }}, which is above the 80% threshold for 5 minutes. HPA should trigger scaling."
+          runbook_url: "https://wiki.company.com/runbooks/ml-api-high-cpu"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: HighErrorRate
+        expr: (rate(http_errors_total{namespace="mlops-tasks10"}[5m]) / rate(http_requests_total{namespace="mlops-tasks10"}[5m])) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: tasks10-ml-api
+          alert_type: reliability
+        annotations:
+          summary: "High error rate in Tasks10 ML API"
+          description: "Error rate is {{ $value | printf \"%.2f\" }}% over the last 5 minutes, which exceeds the 5% threshold. This indicates potential issues with the ML model."
+          runbook_url: "https://wiki.company.com/runbooks/ml-api-high-errors"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace="mlops-tasks10"}[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+          service: tasks10-ml-api
+          alert_type: performance
+        annotations:
+          summary: "Slow response time in Tasks10 ML API"
+          description: "95th percentile response time is {{ $value | printf \"%.2f\" }}s, which exceeds the 2s threshold. Service degradation detected."
+          runbook_url: "https://wiki.company.com/runbooks/ml-api-slow-response"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: KafkaQueueHigh
+        expr: kafka_queue_length{namespace="mlops-tasks10"} > 1000
+        for: 1m
+        labels:
+          severity: critical
+          service: tasks10-ml-api
+          alert_type: capacity
+        annotations:
+          summary: "High Kafka queue length for Tasks10"
+          description: "Kafka queue length is {{ $value }} messages, which exceeds the 1000 threshold. This indicates performance bottlenecks."
+          runbook_url: "https://wiki.company.com/runbooks/kafka-queue-high"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      # ⚠️ WARNING ALERTS - требуют внимания, но не критичны
+
+      - alert: NoPredictions
+        expr: rate(ml_model_predictions_total{namespace="mlops-tasks10"}[10m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: tasks10-ml-api
+          alert_type: functionality
+        annotations:
+          summary: "No ML predictions detected in Tasks10"
+          description: "No predictions have been made in the last 10 minutes. The ML model may not be receiving requests or may be failing."
+          runbook_url: "https://wiki.company.com/runbooks/ml-no-predictions"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: HighMemoryUsage
+        expr: ml_model_memory_usage{namespace="mlops-tasks10"} > 70
+        for: 10m
+        labels:
+          severity: warning
+          service: tasks10-ml-api
+          alert_type: performance
+        annotations:
+          summary: "High memory usage in Tasks10 ML API"
+          description: "Memory usage is {{ $value }}% on instance {{ $labels.instance }}, which is above the 70% threshold for 10 minutes."
+          runbook_url: "https://wiki.company.com/runbooks/ml-api-high-memory"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: ModelScaledToMax
+        expr: kube_deployment_status_replicas{deployment="tasks10-ml-service-api", namespace="mlops-tasks10"} >= 6
+        for: 1m
+        labels:
+          severity: info
+          service: tasks10-ml-api
+          alert_type: scaling
+        annotations:
+          summary: "Tasks10 ML API scaled to maximum replicas"
+          description: "The deployment has scaled to {{ $value }} replicas, reaching the maximum limit of 6. Consider reviewing load patterns."
+          runbook_url: "https://wiki.company.com/runbooks/ml-api-max-scale"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      # 📊 BUSINESS LOGIC ALERTS - специфичные для ML модели
+
+      - alert: HighFraudDetectionRate
+        expr: (rate(ml_model_predictions_total{prediction_result="fraud", namespace="mlops-tasks10"}[15m]) / rate(ml_model_predictions_total{namespace="mlops-tasks10"}[15m])) * 100 > 20
+        for: 5m
+        labels:
+          severity: info
+          service: tasks10-ml-api
+          alert_type: business
+        annotations:
+          summary: "High fraud detection rate in Tasks10"
+          description: "Fraud detection rate is {{ $value | printf \"%.2f\" }}% over the last 15 minutes, which is unusually high (>20%). This may indicate a fraud attack or model drift."
+          runbook_url: "https://wiki.company.com/runbooks/high-fraud-rate"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: ModelPredictionLatencyHigh
+        expr: rate(ml_model_prediction_duration_seconds_sum{namespace="mlops-tasks10"}[5m]) / rate(ml_model_prediction_duration_seconds_count{namespace="mlops-tasks10"}[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+          service: tasks10-ml-api
+          alert_type: performance
+        annotations:
+          summary: "High ML model prediction latency"
+          description: "Average prediction latency is {{ $value | printf \"%.3f\" }}s, which exceeds 1s threshold. Model performance may be degraded."
+          runbook_url: "https://wiki.company.com/runbooks/ml-prediction-latency"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      # 🚨 INFRASTRUCTURE ALERTS - проблемы с инфраструктурой
+
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total{namespace="mlops-tasks10", container="tasks10-ml-service-api"}[15m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: tasks10-ml-api
+          alert_type: infrastructure
+        annotations:
+          summary: "Tasks10 ML API pod is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently. Check pod logs for errors."
+          runbook_url: "https://wiki.company.com/runbooks/pod-crash-loop"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: ServiceDown
+        expr: up{job="tasks10-ml-service", namespace="mlops-tasks10"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: tasks10-ml-api
+          alert_type: infrastructure
+        annotations:
+          summary: "Tasks10 ML API service is down"
+          description: "The Tasks10 ML API service is not responding to health checks. Service may be completely unavailable."
+          runbook_url: "https://wiki.company.com/runbooks/service-down"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      # 🔄 HPA SCALING ALERTS - уведомления о масштабировании
+
+      - alert: HPAScalingEvent
+        expr: changes(kube_deployment_status_replicas{deployment="tasks10-ml-service-api", namespace="mlops-tasks10"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: info
+          service: tasks10-ml-api
+          alert_type: scaling
+        annotations:
+          summary: "HPA scaling event for Tasks10 ML API"
+          description: "Deployment replicas changed to {{ $value }}. HPA triggered scaling due to resource utilization."
+          runbook_url: "https://wiki.company.com/runbooks/hpa-scaling"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+  - name: tasks10-kafka-alerts
+    rules:
+      # 📨 KAFKA SPECIFIC ALERTS
+
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumer_lag{namespace="mlops-tasks10"} > 500
+        for: 2m
+        labels:
+          severity: warning
+          service: tasks10-ml-api
+          alert_type: messaging
+        annotations:
+          summary: "High Kafka consumer lag for Tasks10"
+          description: "Consumer lag is {{ $value }} messages, indicating slow message processing."
+          runbook_url: "https://wiki.company.com/runbooks/kafka-consumer-lag"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+
+      - alert: KafkaMessageProcessingStalled
+        expr: rate(kafka_messages_consumed_total{namespace="mlops-tasks10"}[5m]) == 0 and kafka_queue_length{namespace="mlops-tasks10"} > 0
+        for: 3m
+        labels:
+          severity: critical
+          service: tasks10-ml-api
+          alert_type: messaging
+        annotations:
+          summary: "Kafka message processing stalled for Tasks10"
+          description: "Messages are queued but not being consumed. Processing may be stalled."
+          runbook_url: "https://wiki.company.com/runbooks/kafka-processing-stalled"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
