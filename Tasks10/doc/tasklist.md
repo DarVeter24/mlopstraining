@@ -5,7 +5,7 @@
 - **Итерация 1:** ✅ Завершена
 - **Итерация 2:** ✅ Завершена  
 - **Итерация 3:** ✅ Завершена
-- **Итерация 4:** ⬜ Не начата
+- **Итерация 4:** ✅ Завершена
 - **Итерация 5:** ⬜ Не начата
 
 ---
@@ -77,9 +77,12 @@
 ---
 
 ## Итерация 4: Создание системы мониторинга
-- [ ] Создание monitoring/dashboards/ml-model-dashboard.json для Grafana
-- [ ] Создание monitoring/alerts/ml-alerts.yaml с правилами AlertManager
-- [ ] Настройка алертов: CPU>80%, ErrorRate>5%, ResponseTime>2s, KafkaQueue>1000
+- [x] Создание monitoring/dashboards/ml-model-dashboard.json для Grafana
+- [x] Создание monitoring/alerts/ml-alerts.yaml с правилами AlertManager
+- [x] Настройка алертов: CPU>80%, ErrorRate>5%, ResponseTime>2s, KafkaQueue>1000
+- [x] Исправление ошибок в src/metrics.py (доступ к полям Pydantic объекта)
+- [x] Создание TROUBLESHOOTING.md и QUICK_FIX.md для диагностики
+- [x] Обновление дашборда с переменным datasource ${DS_PROMETHEUS}
 - [ ] Импорт дашборда в существующий Grafana (вручную)
 - [ ] Настройка правил алертинга в существующем AlertManager (вручную)
 - [ ] Тестирование алертов и дашбордов
