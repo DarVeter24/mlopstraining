@@ -196,8 +196,8 @@ def track_prediction_metrics(model_version: str = "unknown"):
                 duration = time.time() - start_time
                 ml_model_prediction_duration.observe(duration)
                 
-                # Определяем результат предсказания
-                prediction_result = "fraud" if result.is_fraud else "legitimate"
+                # Определяем результат предсказания (на основе fraud_probability > 0.5)
+                prediction_result = "fraud" if result.fraud_probability > 0.5 else "legitimate"
                 ml_model_predictions_total.labels(
                     model_version=model_version,
                     prediction_result=prediction_result
@@ -207,8 +207,8 @@ def track_prediction_metrics(model_version: str = "unknown"):
                 if hasattr(result, "fraud_probability") and result.fraud_probability is not None:
                     ml_model_fraud_probability.observe(result.fraud_probability)
                 
-                if hasattr(result, "confidence") and result.confidence is not None:
-                    ml_model_confidence_score.observe(result.confidence)
+                if hasattr(result, "confidence_score") and result.confidence_score is not None:
+                    ml_model_confidence_score.observe(result.confidence_score)
                 
                 return result
                 
