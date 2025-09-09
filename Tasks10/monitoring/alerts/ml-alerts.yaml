@@ -3,6 +3,22 @@ groups:
     rules:
       # 🔥 CRITICAL ALERTS - требуют немедленного внимания
       
+      - alert: AdminNotification_MaxScaleHighCPU
+        expr: kube_deployment_status_replicas{deployment="tasks10-ml-service-api", namespace="mlops-tasks10"} >= 6 and avg(rate(container_cpu_usage_seconds_total{namespace="mlops-tasks10",container="tasks10-ml-service-api"}[5m])) * 100 > 80
+        for: 5m
+        labels:
+          severity: critical
+          service: tasks10-ml-api
+          alert_type: admin_notification
+          notify: admin
+        annotations:
+          summary: "🚨 ADMIN ALERT: Maximum scale reached with high CPU load"
+          description: "Tasks10 ML API has scaled to {{ query \"kube_deployment_status_replicas{deployment='tasks10-ml-service-api', namespace='mlops-tasks10'}\" | first | value }} replicas (max=6) AND average CPU usage is {{ query \"avg(rate(container_cpu_usage_seconds_total{namespace='mlops-tasks10',container='tasks10-ml-service-api'}[5m])) * 100\" | first | value | printf \"%.1f\" }}% (>80%) for 5+ minutes. Immediate admin intervention required."
+          action_required: "1. Check cluster resources 2. Review load patterns 3. Consider increasing resource limits or cluster capacity 4. Investigate potential DDoS or abnormal traffic"
+          runbook_url: "https://wiki.company.com/runbooks/admin-max-scale-high-cpu"
+          dashboard_url: "http://grafana.darveter.com/d/tasks10-ml-dashboard"
+          escalation: "Page system administrator immediately"
+          
       - alert: HighCPUUsage
         expr: ml_model_cpu_usage{namespace="mlops-tasks10"} > 80
         for: 5m
