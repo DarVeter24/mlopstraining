@@ -121,7 +121,8 @@
 **4. [ ] Модифицировать Spark streaming для вызова ML API вместо локального inference** *(правильный маршрут нагрузки)*
    - **Зачем**: Создать реальную нагрузку на ML API через Kafka, используя готовую инфраструктуру Spark
    - **Что получим**: Каждое сообщение из Kafka будет генерировать HTTP запрос к ML API
-   - **Подход**: Модифицировать готовый `spark_stream_inference_local.py` из Tasks8:
+   - **Подход**: Создать новый `spark_stream_inference_http.py` в `dag/` на основе Tasks8:
+     - ✅ **СОЗДАНО**: `/Tasks10/dag/spark_stream_inference_http.py`
      - Заменить локальный MLflow inference → на HTTP POST к нашему ML API
      - Spark читает из `transactions-input` → HTTP запрос к `http://tasks10-ml-api.darveter.com/predict` → CPU нагрузка
      - Результат: **Kafka Producer** → **Spark Streaming** → **HTTP POST** → **ML API** → **HPA масштабирование**
