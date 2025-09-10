@@ -1,5 +1,5 @@
 """
-ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED ML API URL v4.0
+ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED ML API FORMAT v5.0
 
 🚨 ESCALATING ATTACK: Этот DAG модифицирован для Tasks10 Iteration 5
 Вместо локального inference делает HTTP POST запросы к ML API для создания реальной нагрузки.
@@ -100,9 +100,16 @@ def make_ml_api_request(transaction_data: dict) -> dict:
         dict: Результат предсказания или ошибка
     """
     try:
-        # Подготавливаем данные для ML API
+        # Подготавливаем данные для ML API - извлекаем только нужные поля
+        transaction_fields = transaction_data.get("data", {})
         payload = {
-            "instances": [transaction_data]  # ML API ожидает массив instances
+            "transaction_id": transaction_fields.get("transaction_id"),
+            "customer_id": transaction_fields.get("customer_id"),
+            "terminal_id": transaction_fields.get("terminal_id"),
+            "tx_amount": transaction_fields.get("tx_amount"),
+            "tx_time_seconds": transaction_fields.get("tx_time_seconds"),
+            "tx_time_days": transaction_fields.get("tx_time_days"),
+            "tx_fraud_scenario": transaction_fields.get("tx_fraud_scenario")
         }
         
         headers = {
@@ -404,14 +411,14 @@ default_args = {
 
 # Создаем DAG
 dag = DAG(
-    dag_id='tasks10_spark_streaming_http_v4',
+    dag_id='tasks10_spark_streaming_http_v5',
     default_args=default_args,
-    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v4 - Fixed ML API URL to internal service',
+    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v5 - Fixed ML API request format',
     schedule=None,  # Запускается вручную или через escalating attack
     start_date=datetime(2024, 12, 20),
     catchup=False,
     max_active_runs=1,
-    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v4', 'ml-api-internal-url']
+    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v5', 'ml-api-format-fixed']
 )
 
 # Task 1: Тест подключения к ML API
