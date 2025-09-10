@@ -61,7 +61,7 @@ ML_API_TIMEOUT = 10  # секунд на запрос
 ML_API_RETRY_COUNT = 2
 
 # 📊 Kafka Configuration (аналогично Tasks8)
-KAFKA_BOOTSTRAP_SERVERS = "kafka.darveter.com:9092"
+KAFKA_BOOTSTRAP_SERVERS = "kafka.kafka.svc.cluster.local:9092"
 INPUT_TOPIC = "transactions-input"
 OUTPUT_TOPIC = "fraud-predictions"
 

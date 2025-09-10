@@ -113,12 +113,11 @@
    - **Что получим**: AirFlow будет автоматически подхватывать DAG-и из Tasks8 без ручного копирования
    - **Подход**: Использовать готовую конфигурацию из `airflow/airflow-helm.yaml` и настроить Git Sync:
      - Настроить `dags.gitSync` в Helm values для подключения к git репозиторию
-     - Использовать DAG-и из Tasks8: `producer_replay_transactions.py`, `spark_stream_inference_local.py`
      - Настроить автоматическое обновление DAG-ов каждые 60 секунд
    - **Файлы**: Модификация `airflow/airflow-helm.yaml` с добавлением git sync конфигурации
 
 
-**4. [ ] Модифицировать Spark streaming для вызова ML API вместо локального inference** *(правильный маршрут нагрузки)*
+**4. [x] Модифицировать Spark streaming для вызова ML API вместо локального inference** *(правильный маршрут нагрузки)*
    - **Зачем**: Создать реальную нагрузку на ML API через Kafka, используя готовую инфраструктуру Spark
    - **Что получим**: Каждое сообщение из Kafka будет генерировать HTTP запрос к ML API
    - **Подход**: Создать новый `spark_stream_inference_http.py` в `dag/` на основе Tasks8:
@@ -128,16 +127,27 @@
      - Результат: **Kafka Producer** → **Spark Streaming** → **HTTP POST** → **ML API** → **HPA масштабирование**
    - **Преимущества**: Готовая инфраструктура, реальная нагрузка, масштабируемость до тысяч TPS
 
-**5. [ ] Запустить Kafka + Spark streaming: `python spark_stream_inference_local.py` (модифицированный)**
+**5. [ ] Запустить Kafka + Spark streaming через Airflow DAG: `tasks10_spark_streaming_http_v1`**
    - **Зачем**: Создать полную инфраструктуру потоковой обработки как в реальной системе
    - **Что получим**: Kafka будет обрабатывать поток транзакций, Spark будет делать HTTP вызовы к ML API
    - **Детали**: Spark streaming читает из `transactions-input` → HTTP POST к ML API → результаты в `fraud-predictions`
-   - **Модификация**: Заменить MLflow model.predict() на requests.post() к нашему ML API endpoint
+   - **Реализация**: ✅ Готов файл `dag/spark_stream_inference_http.py` с HTTP клиентом вместо локального MLflow
+   - **Запуск**: Ручное тестирование через Airflow UI (все компоненты в Kubernetes):
+     1. Открыть Airflow UI в браузере
+     2. Найти DAG `tasks10_spark_streaming_http_v1`  
+     3. Нажать "Trigger DAG" для ручного запуска
+     4. Мониторить выполнение в логах Airflow
 
-**6. [ ] Запустить escalating attack: `python kafka-attack-producer.py --attack-mode`**
+**6. [ ] Запустить escalating attack через Airflow DAG: `tasks10_escalating_attack_v1`**
    - **Зачем**: Запустить сценарий атаки для создания критической нагрузки на систему
    - **Что получим**: Постепенное увеличение нагрузки до момента срабатывания алерта администратора
    - **Детали**: Каждая фаза атаки длится несколько минут, чтобы HPA успел среагировать и создать новые поды
+   - **Реализация**: ✅ Готов файл `dag/kafka-attack-producer.py` с функцией `run_escalating_attack()`
+   - **Запуск**: Ручное тестирование через Airflow UI (все компоненты в Kubernetes):
+     1. Открыть Airflow UI в браузере
+     2. Найти DAG `tasks10_escalating_attack_v1`
+     3. Нажать "Trigger DAG" для ручного запуска
+     4. Следить за фазами атаки в логах: 50→200→500→1500 TPS
 
 **7. [ ] Мониторить масштабирование: `watch kubectl get pods -n mlops-tasks10`**
    - **Зачем**: Отслеживать реакцию Kubernetes HPA на растущую нагрузку в реальном времени
@@ -148,6 +158,21 @@
    - **Зачем**: Подтвердить что алерт `AdminNotification_MaxScaleHighCPU` срабатывает при критических условиях
    - **Что получим**: Проверку всей системы мониторинга: метрики → Prometheus → AlertManager → уведомление админа
    - **Детали**: Алерт должен сработать через 5 минут после достижения условия "6 подов + CPU>80%"
+   - **Последовательность тестирования**:
+     1. Запустить Spark Streaming (задание 5)
+     2. Запустить Escalating Attack (задание 6) 
+     3. Мониторить поды (задание 7)
+     4. Дождаться алерта (задание 8)
+   - **Доступ к Airflow UI в Kubernetes**:
+     ```bash
+     # Найти Airflow сервис
+     kubectl get svc -A | grep airflow
+     
+     # Port-forward для доступа к Airflow UI
+     kubectl port-forward svc/airflow-webserver 8080:8080 -n airflow
+     
+     # Открыть в браузере: http://localhost:8080
+     ```
 
 ---
 
