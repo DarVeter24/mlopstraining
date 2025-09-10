@@ -1,5 +1,5 @@
 """
-ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED KAFKA v3.0
+ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED ML API URL v4.0
 
 🚨 ESCALATING ATTACK: Этот DAG модифицирован для Tasks10 Iteration 5
 Вместо локального inference делает HTTP POST запросы к ML API для создания реальной нагрузки.
@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 # =====================================================================================
 
 # 🌐 HTTP API Configuration
-ML_API_URL = "http://tasks10-ml-api.darveter.com/predict"
+ML_API_URL = "http://tasks10-ml-service-service.mlops-tasks10.svc.cluster.local:80/predict"
 ML_API_TIMEOUT = 10  # секунд на запрос
 ML_API_RETRY_COUNT = 2
 
@@ -404,14 +404,14 @@ default_args = {
 
 # Создаем DAG
 dag = DAG(
-    dag_id='tasks10_spark_streaming_http_v3',
+    dag_id='tasks10_spark_streaming_http_v4',
     default_args=default_args,
-    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v3 - Added Kafka JAR packages',
+    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v4 - Fixed ML API URL to internal service',
     schedule=None,  # Запускается вручную или через escalating attack
     start_date=datetime(2024, 12, 20),
     catchup=False,
     max_active_runs=1,
-    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v3', 'kafka-jar-fixed']
+    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v4', 'ml-api-internal-url']
 )
 
 # Task 1: Тест подключения к ML API
