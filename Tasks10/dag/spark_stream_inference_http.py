@@ -1,5 +1,5 @@
 """
-ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5)
+ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED KAFKA v2.1
 
 🚨 ESCALATING ATTACK: Этот DAG модифицирован для Tasks10 Iteration 5
 Вместо локального inference делает HTTP POST запросы к ML API для создания реальной нагрузки.
@@ -401,14 +401,14 @@ default_args = {
 
 # Создаем DAG
 dag = DAG(
-    dag_id='tasks10_spark_streaming_http_v1',
+    dag_id='tasks10_spark_streaming_http_v2',
     default_args=default_args,
-    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator',
+    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v2 - Fixed Kafka',
     schedule=None,  # Запускается вручную или через escalating attack
     start_date=datetime(2024, 12, 20),
     catchup=False,
     max_active_runs=1,
-    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation']
+    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v2', 'kafka-fixed']
 )
 
 # Task 1: Тест подключения к ML API
