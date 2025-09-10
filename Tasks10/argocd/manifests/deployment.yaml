@@ -114,10 +114,10 @@ spec:
         resources:
           requests:
             memory: "512Mi"
-            cpu: "250m"
+            cpu: "50m"  # Уменьшено с 250m до 50m для быстрого HPA тестирования
           limits:
             memory: "2Gi"
-            cpu: "1000m"
+            cpu: "200m"  # Уменьшено с 1000m до 200m (4x от requests) для корректной работы HPA
         livenessProbe:
           httpGet:
             path: /health

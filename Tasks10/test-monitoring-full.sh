@@ -227,3 +227,4 @@ echo "3. Запустите Escalating Attack для тестирования а
 echo ""
 echo -e "${BLUE}🚀 Для запуска Escalating Attack:${NC}"
 echo "cd dag && python -c 'from kafka_attack_producer import run_escalating_attack; run_escalating_attack()'"
+

@@ -111,3 +111,4 @@ data:
         - static_configs:
             - targets:
               - alertmanager.prometheus.svc.cluster.local:9093
+
