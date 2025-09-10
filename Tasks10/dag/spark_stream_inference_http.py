@@ -1,5 +1,5 @@
 """
-ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED ML API FORMAT v5.0
+ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED TRANSACTION_ID TYPE v6.0
 
 🚨 ESCALATING ATTACK: Этот DAG модифицирован для Tasks10 Iteration 5
 Вместо локального inference делает HTTP POST запросы к ML API для создания реальной нагрузки.
@@ -103,7 +103,7 @@ def make_ml_api_request(transaction_data: dict) -> dict:
         # Подготавливаем данные для ML API - извлекаем только нужные поля
         transaction_fields = transaction_data.get("data", {})
         payload = {
-            "transaction_id": transaction_fields.get("transaction_id"),
+            "transaction_id": str(transaction_fields.get("transaction_id")),  # Преобразуем в строку!
             "customer_id": transaction_fields.get("customer_id"),
             "terminal_id": transaction_fields.get("terminal_id"),
             "tx_amount": transaction_fields.get("tx_amount"),
@@ -411,14 +411,14 @@ default_args = {
 
 # Создаем DAG
 dag = DAG(
-    dag_id='tasks10_spark_streaming_http_v5',
+    dag_id='tasks10_spark_streaming_http_v6',
     default_args=default_args,
-    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v5 - Fixed ML API request format',
+    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v6 - Fixed transaction_id type to string',
     schedule=None,  # Запускается вручную или через escalating attack
     start_date=datetime(2024, 12, 20),
     catchup=False,
     max_active_runs=1,
-    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v5', 'ml-api-format-fixed']
+    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v6', 'transaction-id-string-fixed']
 )
 
 # Task 1: Тест подключения к ML API
