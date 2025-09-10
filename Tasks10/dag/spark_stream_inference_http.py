@@ -1,5 +1,5 @@
 """
-ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - FIXED TRANSACTION_ID TYPE v6.0
+ШАГ 4 (Tasks10): Spark Streaming Job для HTTP запросов к ML API (ITERATION 5) - EXTENDED RUNTIME v7.0
 
 🚨 ESCALATING ATTACK: Этот DAG модифицирован для Tasks10 Iteration 5
 Вместо локального inference делает HTTP POST запросы к ML API для создания реальной нагрузки.
@@ -312,18 +312,20 @@ def run_spark_streaming_http(**context) -> str:
         
         # Мониторим выполнение
         start_time = time.time()
-        max_runtime = 300  # 5 минут максимум
+        max_runtime = 1800  # 30 минут для HPA тестирования!
         
         while query.isActive and (time.time() - start_time) < max_runtime:
             time.sleep(10)
+            runtime_minutes = (time.time() - start_time) / 60
             progress = query.lastProgress
             if progress:
                 logger.info(f"""
-                📈 Streaming Progress:
+                📈 Streaming Progress (⏱️ {runtime_minutes:.1f}min / {max_runtime/60:.0f}min):
                 - Batch ID: {progress.get('batchId', 'N/A')}
                 - Input rows/sec: {progress.get('inputRowsPerSecond', 0):.1f}
                 - Processing time: {progress.get('durationMs', {}).get('triggerExecution', 0)}ms
                 - 🌐 HTTP requests to ML API: {progress.get('inputRowsPerSecond', 0):.1f}/sec
+                - 🚀 HPA тестирование: Проверьте kubectl get hpa -n mlops-tasks10
                 """)
         
         # Останавливаем стрим
@@ -406,19 +408,19 @@ default_args = {
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
-    'execution_timeout': timedelta(minutes=15),
+    'execution_timeout': timedelta(minutes=35),  # Увеличено для 30-минутного теста
 }
 
 # Создаем DAG
 dag = DAG(
-    dag_id='tasks10_spark_streaming_http_v6',
+    dag_id='tasks10_spark_streaming_http_v7',
     default_args=default_args,
-    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v6 - Fixed transaction_id type to string',
+    description='Tasks10 Iteration 5: Spark Streaming HTTP ML API Load Generator v7 - Extended runtime for HPA testing (30min)',
     schedule=None,  # Запускается вручную или через escalating attack
     start_date=datetime(2024, 12, 20),
     catchup=False,
     max_active_runs=1,
-    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v6', 'transaction-id-string-fixed']
+    tags=['mlops', 'tasks10', 'iteration5', 'spark-streaming', 'http-api', 'load-generation', 'v7', 'extended-runtime-30min']
 )
 
 # Task 1: Тест подключения к ML API
