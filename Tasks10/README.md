@@ -142,17 +142,20 @@
 - **Apache Airflow**: оркестрация нагрузочного тестирования
 - **Kafka Attack Producer**: [`dag/kafka-attack-producer.py`](./dag/kafka-attack-producer.py) - генерация escalating attack
 - **Spark Streaming**: [`dag/spark_stream_inference_http.py`](./dag/spark_stream_inference_http.py) - обработка потока и HTTP запросы к ML API
+- **Parallel Spark Streaming**: [`dag/spark_stream_inference_http_parallel.py`](./dag/spark_stream_inference_http_parallel.py) - 5 параллельных Spark jobs для максимальной нагрузки
 
 **Airflow DAGs - Attack Simulation:**
-
 ![Airflow Attack Streaming](./images/airflow-attack-streaming.png)
 
 **Escalating Attack Pattern:**
-
 ![Escalating Attack](./images/tasks10_escalating_attack_v1.png)
 
-**Kubernetes Pod Scaling:**
+**Spark Streaming Parallel Processing:**
+![Spark Streaming Parallel](./images/tasks10_spark_streaming_parallel_v1.png)
 
+На скриншоте показана работа параллельной обработки Spark Streaming задач в Airflow, что обеспечивает высокопроизводительную обработку потоков данных для ML pipeline.
+
+**Kubernetes Pod Scaling:**
 ![Kubernetes Pod Attack](./images/kuber-pod-attack.png)
 
 На скриншотах показан полный цикл нагрузочного тестирования:
@@ -161,18 +164,11 @@
 3. **Kubernetes HPA** автоматически масштабирует поды с 4 до 6 экземпляров
 4. **Система мониторинга** отслеживает все этапы масштабирования
 
+
 ✅5. **Настроить Apache AirFlow** на периодическое переобучение модели с фиксацией метрик в MLFlow. Для этого разверните AirFlow в кластере и подключите внешний git репозиторий с DAGами для него.
 
-**Реализовано через:**
-- **Apache Airflow**: развернут в Kubernetes кластере для оркестрации ML pipeline
-- **Git DAGs Repository**: подключен внешний репозиторий с DAG'ами для автоматической синхронизации
-- **MLFlow Integration**: интеграция с MLFlow для трекинга экспериментов и версионирования моделей
 
-**Spark Streaming Parallel Processing:**
 
-![Spark Streaming Parallel](./images/tasks10_spark_streaming_parallel_v1.png)
-
-На скриншоте показана работа параллельной обработки Spark Streaming задач в Airflow, что обеспечивает высокопроизводительную обработку потоков данных для ML pipeline.
 
 
 Итого как это работает:
