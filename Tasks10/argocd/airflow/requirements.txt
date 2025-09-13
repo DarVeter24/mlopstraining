@@ -1,0 +1,24 @@
+# Kafka Python Client
+kafka-python==2.0.3
+six>=1.16.0
+# MLOps зависимости
+mlflow==2.15.1
+pyspark==3.5.5
+
+# Работа с данными
+pandas
+numpy
+scikit-learn
+pyarrow
+
+# S3/MinIO
+boto3
+s3fs
+botocore
+
+# Kubernetes
+apache-airflow-providers-cncf-kubernetes
+
+# Утилиты
+requests
+python-dotenv
